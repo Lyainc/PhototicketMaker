@@ -1,11 +1,11 @@
-// CGV 포토플레이 사양
-export const TARGET_WIDTH = 960;
-export const TARGET_HEIGHT = 1477;
-export const TARGET_RATIO = TARGET_WIDTH / TARGET_HEIGHT; // 0.65:1
+import { TARGET_WIDTH, TARGET_HEIGHT, TARGET_RATIO, JPEG_QUALITY } from './constants';
 
 /**
  * 이미지를 CGV 포토플레이 비율(0.65:1)로 자동 크롭
- * Phase 0에서 검증된 로직
+ *
+ * @param file - 업로드된 이미지 파일 (JPG, PNG, WebP)
+ * @returns Promise<string> - 크롭된 이미지의 Data URL
+ * @throws Error - 파일 읽기 또는 이미지 로드 실패 시
  */
 export async function cropImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -53,7 +53,7 @@ export async function cropImage(file: File): Promise<string> {
         );
 
         // Data URL로 변환
-        const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const croppedImageUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
         resolve(croppedImageUrl);
       };
 

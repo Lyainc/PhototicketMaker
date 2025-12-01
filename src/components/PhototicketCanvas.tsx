@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { TARGET_WIDTH, TARGET_HEIGHT } from '@/utils/imageCrop';
+import { TARGET_WIDTH, TARGET_HEIGHT, CANVAS_LAYOUT } from '@/utils/constants';
 
 interface PhototicketCanvasProps {
   croppedImageUrl: string | null;
@@ -12,6 +12,12 @@ interface PhototicketCanvasProps {
   format: string;
 }
 
+/**
+ * 포토티켓 Canvas 렌더링 컴포넌트
+ *
+ * Canvas API를 사용하여 포스터 이미지 위에
+ * 텍스트와 오버레이를 합성합니다.
+ */
 export default function PhototicketCanvas({
   croppedImageUrl,
   movieTitle,
@@ -22,7 +28,6 @@ export default function PhototicketCanvas({
 }: PhototicketCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 이미지/텍스트 렌더링 (Phase 0 로직 재사용)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !croppedImageUrl) return;
@@ -38,58 +43,76 @@ export default function PhototicketCanvas({
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
 
-    // 배경 이미지 로드
+    // 배경 이미지 로드 및 렌더링
     const img = new Image();
     img.onload = () => {
       // 이미지 그리기
       ctx.drawImage(img, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
 
       // 하단 오버레이 (반투명 검은색)
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(0, TARGET_HEIGHT - 200, TARGET_WIDTH, 200);
+      ctx.fillStyle = CANVAS_LAYOUT.colors.overlay;
+      ctx.fillRect(
+        0,
+        TARGET_HEIGHT - CANVAS_LAYOUT.overlayHeight,
+        TARGET_WIDTH,
+        CANVAS_LAYOUT.overlayHeight
+      );
 
       // 극장 체인 (상단, 빨간색)
       if (chain) {
-        ctx.font = 'bold 32px Arial';
-        ctx.fillStyle = '#ff0000';
-        ctx.fillText(chain, 40, 70);
+        ctx.font = `bold ${CANVAS_LAYOUT.fonts.chainSize}px Arial`;
+        ctx.fillStyle = CANVAS_LAYOUT.colors.chain;
+        ctx.fillText(chain, CANVAS_LAYOUT.padding, CANVAS_LAYOUT.chainY);
       }
 
       // 상영 포맷 (상단, 흰색 + 배경)
       if (format) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(35, 95, ctx.measureText(format).width + 10, 35);
-        ctx.font = '24px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(format, 40, 120);
+        ctx.font = `${CANVAS_LAYOUT.fonts.formatSize}px Arial`;
+        const textWidth = ctx.measureText(format).width;
+
+        ctx.fillStyle = CANVAS_LAYOUT.colors.formatBg;
+        ctx.fillRect(
+          CANVAS_LAYOUT.padding - 5,
+          CANVAS_LAYOUT.formatY - 25,
+          textWidth + 10,
+          35
+        );
+
+        ctx.fillStyle = CANVAS_LAYOUT.colors.format;
+        ctx.fillText(format, CANVAS_LAYOUT.padding, CANVAS_LAYOUT.formatY);
       }
 
       // 영화 제목 (하단)
       if (movieTitle) {
-        ctx.font = 'bold 48px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(movieTitle, 40, TARGET_HEIGHT - 140);
+        ctx.font = `bold ${CANVAS_LAYOUT.fonts.titleSize}px Arial`;
+        ctx.fillStyle = CANVAS_LAYOUT.colors.title;
+        ctx.fillText(movieTitle, CANVAS_LAYOUT.padding, CANVAS_LAYOUT.titleY);
       }
 
       // 관람일 (하단)
       if (watchDate) {
-        ctx.font = '24px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(watchDate, 40, TARGET_HEIGHT - 90);
+        ctx.font = `${CANVAS_LAYOUT.fonts.dateSize}px Arial`;
+        ctx.fillStyle = CANVAS_LAYOUT.colors.date;
+        ctx.fillText(watchDate, CANVAS_LAYOUT.padding, CANVAS_LAYOUT.dateY);
       }
 
       // 극장 위치 (하단)
       if (theater) {
-        ctx.font = '20px Arial';
-        ctx.fillStyle = '#cccccc';
-        ctx.fillText(theater, 40, TARGET_HEIGHT - 45);
+        ctx.font = `${CANVAS_LAYOUT.fonts.theaterSize}px Arial`;
+        ctx.fillStyle = CANVAS_LAYOUT.colors.theater;
+        ctx.fillText(theater, CANVAS_LAYOUT.padding, CANVAS_LAYOUT.theaterY);
       }
 
       // Canvas를 window에 노출 (다운로드용)
-      (window as any).phototicketCanvas = canvas;
+      window.phototicketCanvas = canvas;
     };
 
     img.src = croppedImageUrl;
+
+    // Cleanup
+    return () => {
+      delete window.phototicketCanvas;
+    };
   }, [croppedImageUrl, movieTitle, watchDate, theater, chain, format]);
 
   return (
