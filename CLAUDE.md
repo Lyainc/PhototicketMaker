@@ -252,16 +252,13 @@ interface PhototicketState {
 
 ```bash
 # 개발 서버 실행
-npm run dev
+bun run dev
 
 # 빌드
-npm run build
-
-# 타입 체크
-npm run type-check
+bun run build
 
 # 린트
-npm run lint
+bun run lint
 ```
 
 ## Phase별 핵심 태스크
@@ -445,9 +442,9 @@ npm run dev
 **문제**: 개발 서버 실행 안됨
 ```bash
 # node_modules 재설치
-rm -rf node_modules package-lock.json
-npm install
-npm run dev
+rm -rf node_modules bun.lock
+bun install
+bun run dev
 ```
 
 **문제**: Canvas 렌더링 안됨

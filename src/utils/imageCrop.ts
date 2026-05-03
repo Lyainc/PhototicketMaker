@@ -1,73 +1,64 @@
 import { TARGET_WIDTH, TARGET_HEIGHT, TARGET_RATIO } from './constants';
 
+export interface Area {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
+
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.src = url;
+  });
+
 /**
- * 이미지를 CGV 포토플레이 비율(0.65:1)로 자동 크롭
- * Memory Optimized: base64 대신 Object URL 사용
+ * 선택된 픽셀 영역을 기반으로 이미지를 크롭하여 Object URL로 반환
+ * Memory Optimized: Object URL 사용 (사용 후 revokeObjectURL 필요)
  *
- * @param file - 업로드된 이미지 파일 (JPG, PNG, WebP)
- * @returns Promise<string> - 크롭된 이미지의 Object URL (사용 후 revokeObjectURL 필요)
+ * @param imageSrc - 원본 이미지의 Object URL
+ * @param pixelCrop - react-easy-crop에서 반환된 크롭 픽셀 영역
+ * @returns Promise<string> - 크롭된 이미지의 Object URL
  */
-export async function cropImage(file: File): Promise<string> {
+export async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: Area
+): Promise<string> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Canvas context not available');
+  }
+
+  // 항상 고정된 출력 해상도 (960x1477)
+  canvas.width = TARGET_WIDTH;
+  canvas.height = TARGET_HEIGHT;
+
+  // 원본 이미지에서 pixelCrop 영역만큼 가져와서 canvas 해상도에 맞게 그림
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    TARGET_WIDTH,
+    TARGET_HEIGHT
+  );
+
   return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-
-    img.onload = () => {
-      // 원본 이미지 비율
-      const imgRatio = img.width / img.height;
-
-      // 크롭 영역 계산 (중앙 정렬)
-      let cropX, cropY, cropWidth, cropHeight;
-
-      if (imgRatio > TARGET_RATIO) {
-        // 이미지가 더 넓음 → 좌우 크롭
-        cropHeight = img.height;
-        cropWidth = img.height * TARGET_RATIO;
-        cropX = (img.width - cropWidth) / 2;
-        cropY = 0;
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(URL.createObjectURL(blob));
       } else {
-        // 이미지가 더 좁음 → 상하 크롭
-        cropWidth = img.width;
-        cropHeight = img.width / TARGET_RATIO;
-        cropX = 0;
-        cropY = (img.height - cropHeight) / 2;
+        reject(new Error('Canvas is empty'));
       }
-
-      // Canvas에 크롭된 이미지 그리기
-      const canvas = document.createElement('canvas');
-      canvas.width = TARGET_WIDTH;
-      canvas.height = TARGET_HEIGHT;
-      const ctx = canvas.getContext('2d');
-
-      if (!ctx) {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error('Canvas context not available'));
-        return;
-      }
-
-      ctx.drawImage(
-        img,
-        cropX, cropY, cropWidth, cropHeight,
-        0, 0, TARGET_WIDTH, TARGET_HEIGHT
-      );
-
-      // Blob으로 변환하여 메모리 효율성 확보
-      canvas.toBlob((blob) => {
-        URL.revokeObjectURL(objectUrl); // 원본 이미지 메모리 해제
-        if (blob) {
-          const resultUrl = URL.createObjectURL(blob);
-          resolve(resultUrl);
-        } else {
-          reject(new Error('Blob creation failed'));
-        }
-      }, 'image/jpeg', 0.95);
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Image load failed'));
-    };
-
-    img.src = objectUrl;
+    }, 'image/jpeg', 0.95);
   });
 }

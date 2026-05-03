@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import { PhototicketState, MovieInfo, TicketComponents } from '@/types';
-import { cropImage } from '@/utils/imageCrop';
 
 export function usePhototicket() {
   const [state, setState] = useState<PhototicketState>({
@@ -32,15 +31,20 @@ export function usePhototicket() {
     return () => clearTimeout(handler);
   }, [state]);
 
-  // Handle image upload with memory optimization
-  const handleImageUpload = useCallback(async (file: File) => {
+  // Handle image upload from UI cropped result
+  const handleImageUpload = useCallback((croppedUrl: string) => {
     setIsProcessing(true);
     try {
-      const croppedUrl = await cropImage(file);
-      setState((prev) => ({ ...prev, croppedImageUrl: croppedUrl }));
+      setState((prev) => {
+        // 이전 이미지가 있다면 메모리 해제
+        if (prev.croppedImageUrl) {
+          URL.revokeObjectURL(prev.croppedImageUrl);
+        }
+        return { ...prev, croppedImageUrl: croppedUrl };
+      });
     } catch (error) {
-      console.error('이미지 처리 실패:', error);
-      alert('이미지 처리에 실패했습니다.');
+      console.error('이미지 상태 업데이트 실패:', error);
+      alert('이미지 설정에 실패했습니다.');
     } finally {
       setIsProcessing(false);
     }
