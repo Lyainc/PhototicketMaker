@@ -1,20 +1,118 @@
 import { TARGET_WIDTH, TARGET_HEIGHT, DESIGN_LAYOUT } from './constants';
 
-export async function drawLogo(ctx: CanvasRenderingContext2D, src: string, x: number, y: number, maxWidth: number, maxHeight: number): Promise<void> {
-  return new Promise((resolve) => {
+// 로고 이미지 엘리먼트 캐시 (중복 로딩 방지)
+const imageElementCache = new Map<string, Promise<HTMLImageElement>>();
+// 최종 렌더링된 오프스크린 캔버스 캐시 (경로 + 색상 + 크기 키값)
+const logoCanvasCache = new Map<string, HTMLCanvasElement>();
+
+/**
+ * 이미지를 로드하고 캐시하는 헬퍼
+ */
+function loadImage(src: string): Promise<HTMLImageElement> {
+  if (imageElementCache.has(src)) {
+    return imageElementCache.get(src)!;
+  }
+
+  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
-      ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-      resolve();
-    };
+    img.onload = () => resolve(img);
     img.onerror = () => {
-      console.warn(`Failed to load logo: ${src}`);
-      resolve();
+      console.warn(`Failed to load image: ${src}`);
+      reject(new Error(`Load failed: ${src}`));
     };
     img.src = src;
   });
+
+  imageElementCache.set(src, promise);
+  return promise;
+}
+
+/**
+ * 로고를 캔버스에 그림 (배경 제거된 실루엣에 색상 입히기 및 중앙 정렬 지원)
+ */
+export async function drawLogo(
+  ctx: CanvasRenderingContext2D,
+  src: string,
+  targetX: number,
+  targetY: number,
+  targetMaxWidth: number,
+  targetMaxHeight: number,
+  themeColor: string = '#FFFFFF',
+  center: boolean = true // 중앙 정렬 옵션 추가
+): Promise<void> {
+  const cacheKey = `${src}_${themeColor}_${targetMaxWidth}_${targetMaxHeight}`;
+  
+  if (logoCanvasCache.has(cacheKey)) {
+    const cachedCanvas = logoCanvasCache.get(cacheKey)!;
+    const finalX = center ? targetX + (targetMaxWidth - cachedCanvas.width) / 2 : targetX;
+    const finalY = center ? targetY + (targetMaxHeight - cachedCanvas.height) / 2 : targetY;
+    ctx.drawImage(cachedCanvas, Math.round(finalX), Math.round(finalY));
+    return;
+  }
+
+  try {
+    const img = await loadImage(src);
+    
+    // 비율 유지하며 크기 계산
+    const scale = Math.min(targetMaxWidth / img.width, targetMaxHeight / img.height);
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+
+    if (w <= 0 || h <= 0) return;
+
+    // 오프스크린 캔버스 생성 (색상 변경 및 캐싱용)
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = w;
+    offCanvas.height = h;
+    const offCtx = offCanvas.getContext('2d');
+    
+    if (!offCtx) {
+      const finalX = center ? targetX + (targetMaxWidth - w) / 2 : targetX;
+      const finalY = center ? targetY + (targetMaxHeight - h) / 2 : targetY;
+      ctx.drawImage(img, Math.round(finalX), Math.round(finalY), w, h);
+      return;
+    }
+
+    // 1. 캔버스 초기화 (완전 투명)
+    offCtx.clearRect(0, 0, w, h);
+    
+    // 2. 먼저 테마 색상으로 채움
+    offCtx.fillStyle = themeColor;
+    offCtx.fillRect(0, 0, w, h);
+    
+    // 3. 'destination-in' 모드 적용: 이미지의 불투명 영역만 남김 (마스킹)
+    offCtx.globalCompositeOperation = 'destination-in';
+    offCtx.drawImage(img, 0, 0, w, h);
+
+    // 캐시에 저장
+    logoCanvasCache.set(cacheKey, offCanvas);
+    
+    const finalX = center ? targetX + (targetMaxWidth - w) / 2 : targetX;
+    const finalY = center ? targetY + (targetMaxHeight - h) / 2 : targetY;
+    ctx.drawImage(offCanvas, Math.round(finalX), Math.round(finalY));
+  } catch (err) {
+    console.warn(`Failed to process logo: ${src}`, err);
+  }
+}
+
+/**
+ * 배경색에 따른 최적의 텍스트 색상(검정/흰색) 반환
+ */
+export function getContrastColor(hexColor: string): '#000000' | '#FFFFFF' {
+  // HEX 코드 정규화 (#FFF -> #FFFFFF)
+  let hex = hexColor.replace('#', '');
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('');
+  }
+  
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  
+  // 밝기 계산 (YIQ 가중치 적용)
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? '#000000' : '#FFFFFF';
 }
 
 export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -99,30 +197,7 @@ export function fillTextWithSpacing(
   }
 }
 
-export function drawBarcode(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  isDark: boolean
-) {
-  ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
-  const bars = [2, 1, 3, 1, 1, 4, 2, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 2];
-  let currentX = x;
-  
-  for (let i = 0; i < bars.length; i++) {
-    const barWidth = bars[i] * 2.5; 
-    const gap = (i % 2 === 0) ? 4 : 8; 
-    
-    if (currentX + barWidth > x + width) break;
-    
-    ctx.fillRect(currentX, y, barWidth, height);
-    currentX += barWidth + gap;
-  }
-}
-
-export function drawTCGBorder(ctx: CanvasRenderingContext2D, isDark: boolean) {
+export function drawTCGBorder(ctx: CanvasRenderingContext2D, color: string) {
   const { margin, thickness, radius } = DESIGN_LAYOUT.border;
   const width = TARGET_WIDTH - margin * 2;
   const height = TARGET_HEIGHT - margin * 2;
@@ -141,53 +216,103 @@ export function drawTCGBorder(ctx: CanvasRenderingContext2D, isDark: boolean) {
   ctx.closePath();
 
   ctx.lineWidth = thickness;
-  ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)';
-  ctx.shadowColor = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowBlur = 8;
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = 0.4;
   
   ctx.stroke();
   ctx.restore();
 }
 
 export function applyTextureOverlay(ctx: CanvasRenderingContext2D, texture: string, width: number, height: number) {
-  if (!texture || texture === 'none' || texture === 'vintage' || texture === 'newspaper') return;
+  if (!texture || texture === 'none' || texture === 'original' || texture === 'vintage' || texture === 'newspaper') return;
 
   ctx.save();
   
   if (texture === 'hologram') {
     const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, 'rgba(255, 0, 0, 0.15)');
-    gradient.addColorStop(0.2, 'rgba(255, 165, 0, 0.15)');
-    gradient.addColorStop(0.4, 'rgba(255, 255, 0, 0.15)');
-    gradient.addColorStop(0.6, 'rgba(0, 128, 0, 0.15)');
-    gradient.addColorStop(0.8, 'rgba(0, 0, 255, 0.15)');
-    gradient.addColorStop(1, 'rgba(238, 130, 238, 0.15)');
+    gradient.addColorStop(0, 'rgba(255, 182, 193, 0.15)'); // 파스텔 핑크
+    gradient.addColorStop(0.2, 'rgba(255, 223, 186, 0.15)'); // 파스텔 오렌지
+    gradient.addColorStop(0.4, 'rgba(255, 255, 186, 0.15)'); // 파스텔 옐로우
+    gradient.addColorStop(0.6, 'rgba(186, 255, 201, 0.15)'); // 파스텔 그린
+    gradient.addColorStop(0.8, 'rgba(186, 225, 255, 0.15)'); // 파스텔 블루
+    gradient.addColorStop(1, 'rgba(216, 191, 216, 0.15)'); // 파스텔 퍼플
     
     ctx.globalCompositeOperation = 'color-dodge';
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
+    
+    // 은은한 반짝임 효과
+    const sparkle = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width);
+    sparkle.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+    sparkle.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = sparkle;
+    ctx.fillRect(0, 0, width, height);
   } 
   else if (texture === 'metal') {
+    // 브러시드 메탈 느낌의 미세한 선 패턴 생성 (오프스크린 캔버스)
+    const patternCanvas = document.createElement('canvas');
+    patternCanvas.width = 4;
+    patternCanvas.height = 4;
+    const pCtx = patternCanvas.getContext('2d');
+    if (pCtx) {
+      pCtx.fillStyle = 'rgba(255, 255, 255, 0)';
+      pCtx.fillRect(0, 0, 4, 4);
+      pCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      pCtx.fillRect(0, 0, 4, 1);
+      pCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      pCtx.fillRect(0, 2, 4, 1);
+      const pattern = ctx.createPattern(patternCanvas, 'repeat');
+      if (pattern) {
+        ctx.globalCompositeOperation = 'overlay';
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
+
+    // 차가운 금속 반사 그라디언트
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-    gradient.addColorStop(0.4, 'rgba(200, 200, 200, 0.1)');
+    gradient.addColorStop(0.3, 'rgba(180, 190, 200, 0.1)');
     gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
-    gradient.addColorStop(0.6, 'rgba(150, 150, 150, 0.1)');
-    gradient.addColorStop(1, 'rgba(50, 50, 50, 0.3)');
+    gradient.addColorStop(0.7, 'rgba(100, 110, 120, 0.1)');
+    gradient.addColorStop(1, 'rgba(30, 40, 50, 0.3)');
     
     ctx.globalCompositeOperation = 'hard-light';
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
   else if (texture === 'artpaper') {
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = 'rgba(230, 225, 215, 0.3)';
-    ctx.fillRect(0, 0, width, height);
+    // 캔버스 직물 패턴 생성
+    const patternCanvas = document.createElement('canvas');
+    patternCanvas.width = 6;
+    patternCanvas.height = 6;
+    const pCtx = patternCanvas.getContext('2d');
+    if (pCtx) {
+      pCtx.fillStyle = 'rgba(220, 210, 190, 0.3)';
+      pCtx.fillRect(0, 0, 6, 6);
+      pCtx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+      pCtx.fillRect(0, 0, 3, 3);
+      pCtx.fillRect(3, 3, 3, 3);
+      pCtx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+      pCtx.fillRect(3, 0, 3, 3);
+      pCtx.fillRect(0, 3, 3, 3);
+      
+      const pattern = ctx.createPattern(patternCanvas, 'repeat');
+      if (pattern) {
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
   }
   else if (texture === 'scodix') {
-    const gradient = ctx.createLinearGradient(0, height/2, width, height/2);
+    // 입체감을 위한 강한 하이라이트와 엠보싱 그림자
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.15)');
+    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0)');
+    gradient.addColorStop(0.45, 'rgba(0, 0, 0, 0.1)'); // 엠보싱 그림자
+    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.6)'); // 강한 하이라이트
+    gradient.addColorStop(0.55, 'rgba(255, 255, 255, 0)');
     gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
     
     ctx.globalCompositeOperation = 'overlay';
@@ -198,9 +323,18 @@ export function applyTextureOverlay(ctx: CanvasRenderingContext2D, texture: stri
   ctx.restore();
 }
 
-export function drawStars(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, gap: number, isDark: boolean) {
+export function drawStars(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  gap: number,
+  rating: number,
+  themeColor: string
+) {
   ctx.save();
-  ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)';
+  ctx.strokeStyle = themeColor;
+  ctx.fillStyle = themeColor;
   ctx.lineWidth = 2.5;
   ctx.lineJoin = 'round';
   
@@ -209,6 +343,7 @@ export function drawStars(ctx: CanvasRenderingContext2D, x: number, y: number, s
   const innerRadius = size / 4;
   
   for(let i=0; i<5; i++) {
+    const isFilled = i < rating;
     let rot = Math.PI / 2 * 3;
     let cx = currentX + outerRadius;
     let cy = y;
@@ -229,7 +364,14 @@ export function drawStars(ctx: CanvasRenderingContext2D, x: number, y: number, s
     }
     ctx.lineTo(cx, cy - outerRadius);
     ctx.closePath();
-    ctx.stroke();
+    
+    if (isFilled) {
+      ctx.fill();
+    } else {
+      ctx.globalAlpha = 0.3;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
     
     currentX += size + gap;
   }

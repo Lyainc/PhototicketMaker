@@ -15,8 +15,8 @@ export const THEATER_CHAINS = [
   { value: '', label: '선택 안함', file: null },
   { value: 'CGV', label: 'CGV', file: 'cgv.png' },
   { value: '롯데시네마', label: '롯데시네마', file: 'lotte.png' },
-  { value: '메가박스', label: '메가박스', file: 'megabox.svg' },
-  { value: '씨네Q', label: '씨네Q', file: 'cineq.svg' },
+  { value: '메가박스', label: '메가박스', file: 'megabox.png' },
+  { value: '씨네Q', label: '씨네Q', file: 'cineq.png' },
 ] as const;
 
 // 상영 포맷 목록 (에셋 파일명과 일치)
@@ -24,9 +24,9 @@ export const SCREENING_FORMATS = [
   { value: '', label: '선택 안함', file: null },
 
   // 프리미엄 포맷
-  { value: 'IMAX', label: 'IMAX', file: 'imax.svg' },
-  { value: '4DX', label: '4DX', file: '4dx.svg' },
-  { value: 'ULTRA 4DX', label: 'ULTRA 4DX', file: 'ultra4dx.webp' },
+  { value: 'IMAX', label: 'IMAX', file: 'imax.png' },
+  { value: '4DX', label: '4DX', file: '4dx.png' },
+  { value: 'ULTRA 4DX', label: 'ULTRA 4DX', file: 'ultra4dx.png' },
   { value: 'ScreenX', label: 'ScreenX', file: 'screenx.png' },
   { value: 'MX4D', label: 'MX4D', file: 'smx4d.png' },
 
@@ -36,14 +36,14 @@ export const SCREENING_FORMATS = [
   { value: 'DOLBY Vision+Atmos', label: 'DOLBY Vision+Atmos', file: 'dolby-va.png' },
 
   // LED/스크린 포맷
-  { value: 'SUPER PLEX', label: 'SUPER PLEX', file: 'superplex.svg' },
-  { value: 'SUPER LED', label: 'SUPER LED', file: 'superled.svg' },
+  { value: 'SUPER PLEX', label: 'SUPER PLEX', file: 'superplex.png' },
+  { value: 'SUPER LED', label: 'SUPER LED', file: 'superled.png' },
   { value: 'MEGA LED', label: 'MEGA LED', file: 'megaled.png' },
   { value: 'SLED', label: 'SLED', file: 'sled.png' },
 
   // 사운드 포맷
-  { value: 'CrazySound', label: 'CrazySound', file: 'crazysound.svg' },
-  { value: 'CrazySound LED', label: 'CrazySound LED', file: 'crazysoundled.svg' },
+  { value: 'CrazySound', label: 'CrazySound', file: 'crazysound.png' },
+  { value: 'CrazySound LED', label: 'CrazySound LED', file: 'crazysoundled.png' },
 
   // 특별관
   { value: '샬롯데', label: '샬롯데', file: 'chalotte.png' },
@@ -55,6 +55,7 @@ export const SCREENING_FORMATS = [
 
 // 후가공 텍스처(특수 용지) 옵션
 export const TEXTURE_OPTIONS = [
+  { value: 'original', label: '무가공 (원본 이미지 그대로)' },
   { value: 'none', label: '일반 인화지 (기본)' },
   { value: 'hologram', label: '홀로그램 (무지개빛 반사)' },
   { value: 'metal', label: '메탈릭 (차가운 금속 질감)' },
@@ -68,7 +69,7 @@ export const TEXTURE_OPTIONS = [
 export const DESIGN_LAYOUT = {
   // TCG 스타일 이너 프레임 (테두리)
   border: {
-    margin: 20, // 캔버스 끝에서 들어가는 정도
+    margin: 40, // 캔버스 끝에서 들어가는 정도
     thickness: 4,
     radius: 16,
   },
@@ -82,13 +83,14 @@ export const DESIGN_LAYOUT = {
   },
 
   // 상영 포맷 배지 (우측 상단)
+  // 극장 로고와 세로 중앙 정렬을 위해 y값 조정 (70 + 60/2 = 100, 100 - 56/2 = 72)
   formatBadge: {
-    x: 730,
-    y: 70,
-    maxWidth: 150,
-    maxHeight: 46,
-    padding: 14,
-    borderRadius: 10,
+    x: 708,
+    y: 72,
+    badgeWidth: 192,
+    badgeHeight: 56,
+    padding: 8,
+    borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
   },
 
@@ -96,16 +98,6 @@ export const DESIGN_LAYOUT = {
   stub: {
     y: 1080,
     height: 397, // 1477 - 1080
-  },
-
-  // 넘버링 (수집용 티켓 감성)
-  numbering: {
-    x: 60,
-    y: 1140,
-    fontSize: 34,
-    fontWeight: '700',
-    letterSpacing: 4,
-    prefix: 'No.',
   },
 
   // 별점 (메가박스 오리지널 티켓 스타일)
@@ -153,15 +145,6 @@ export const DESIGN_LAYOUT = {
       opacity: 0.7,
       letterSpacing: 1,
     }
-  },
-
-  // 장식용 가상 바코드 (우측 하단)
-  barcode: {
-    x: 710,
-    y: 1345,
-    width: 190,
-    height: 80,
-    opacity: 0.8,
   },
 
   // 여백

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { TARGET_WIDTH, TARGET_HEIGHT, DESIGN_LAYOUT, DESIGN_EFFECTS, THEATER_CHAINS, SCREENING_FORMATS } from '@/utils/constants';
-import { drawLogo, roundRect, wrapText, fillTextWithSpacing, drawBarcode, drawTCGBorder, applyTextureOverlay, drawStars } from '@/utils/canvasRendering';
+import { drawLogo, roundRect, wrapText, fillTextWithSpacing, drawTCGBorder, applyTextureOverlay, drawStars, getContrastColor } from '@/utils/canvasRendering';
 
 interface PhototicketCanvasProps {
   croppedImageUrl: string | null;
@@ -12,31 +12,11 @@ interface PhototicketCanvasProps {
   chain: string;
   format: string;
   texture: string;
+  rating: number;
+  posterOpacity: number;
+  themeColor: string;
   screen?: string;
   seat?: string;
-}
-
-/**
- * 이미지 하단부 평균 밝기를 분석하여 텍스트 색상을 결정합니다.
- */
-function getContrastColor(ctx: CanvasRenderingContext2D): 'white' | 'black' {
-  const checkAreaHeight = 400; 
-  const imageData = ctx.getImageData(0, TARGET_HEIGHT - checkAreaHeight, TARGET_WIDTH, checkAreaHeight);
-  const data = imageData.data;
-  let r, g, b, avg;
-  let colorSum = 0;
-
-  for (let x = 0, len = data.length; x < len; x += 4) {
-    r = data[x];
-    g = data[x + 1];
-    b = data[x + 2];
-
-    avg = Math.floor((r + g + b) / 3);
-    colorSum += avg;
-  }
-
-  const brightness = colorSum / (data.length / 4);
-  return brightness > 190 ? 'black' : 'white';
 }
 
 /**
@@ -50,6 +30,9 @@ const PhototicketCanvas = forwardRef<HTMLCanvasElement, PhototicketCanvasProps>(
   chain,
   format,
   texture,
+  rating,
+  posterOpacity,
+  themeColor,
   screen,
   seat
 }, ref) => {
@@ -68,6 +51,7 @@ const PhototicketCanvas = forwardRef<HTMLCanvasElement, PhototicketCanvasProps>(
     canvas.width = TARGET_WIDTH;
     canvas.height = TARGET_HEIGHT;
 
+    // 0. 배경 초기화 (기본 블랙)
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
 
@@ -80,7 +64,7 @@ const PhototicketCanvas = forwardRef<HTMLCanvasElement, PhototicketCanvasProps>(
     posterImg.onload = async () => {
       if (isCancelled) return;
 
-      // 0. 초기 필터 (빈티지, 흑백 신문 등)
+      // 1. 포스터 렌더링 (질감 필터 포함)
       ctx.filter = 'none';
       if (texture === 'vintage') {
         ctx.filter = 'sepia(60%) contrast(1.1) brightness(0.9)';
@@ -88,77 +72,89 @@ const PhototicketCanvas = forwardRef<HTMLCanvasElement, PhototicketCanvasProps>(
         ctx.filter = 'grayscale(100%) contrast(1.5) brightness(1.2)';
       }
 
-      // 1. 포스터 렌더링
       ctx.drawImage(posterImg, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
-      ctx.filter = 'none'; // 필터 초기화
+      ctx.filter = 'none'; 
 
-      // 2. 밝기 분석 및 색상 결정
-      const contrastMode = getContrastColor(ctx);
-      const isDark = contrastMode === 'white';
+      if (texture !== 'original') {
+        // 2. 포스터 시인성 확보를 위한 오버레이 (사용자 지정 불투명도)
+        // 검은색 레이어를 덮어서 이미지를 어둡게 만듦 (opacity가 1에 가까울수록 원본, 0에 가까울수록 블랙)
+        ctx.globalAlpha = 1 - posterOpacity;
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+        ctx.globalAlpha = 1.0;
 
-      // 3. 시네마틱 그라디언트 오버레이
-      const gradient = ctx.createLinearGradient(0, 0, 0, TARGET_HEIGHT);
-      const stops = isDark ? DESIGN_EFFECTS.gradients.topDark.stops : DESIGN_EFFECTS.gradients.topLight.stops;
-      stops.forEach(stop => {
-        gradient.addColorStop(stop.offset, stop.color);
-      });
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+        // 3. 시네마틱 그라디언트 오버레이 (상단/하단 부드러운 감성)
+        const gradient = ctx.createLinearGradient(0, 0, 0, TARGET_HEIGHT);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
+        gradient.addColorStop(0.2, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(0.8, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+      }
 
-      // 4. 로고 렌더링 (체인)
+      // 4. 로고 렌더링 (체인) - 배경 제거 및 테마 색상 적용
       if (chain) {
         const chainData = THEATER_CHAINS.find(c => c.value === chain);
         if (chainData && chainData.file) {
-          await drawLogo(ctx, `/assets/chains/${chainData.file}`, DESIGN_LAYOUT.chainLogo.x, DESIGN_LAYOUT.chainLogo.y, DESIGN_LAYOUT.chainLogo.maxWidth, DESIGN_LAYOUT.chainLogo.maxHeight);
+          // 극장 로고는 사용자가 선택한 테마 색상 그대로 사용
+          await drawLogo(
+            ctx, 
+            `/assets/chains_transparent/${chainData.file}`, 
+            DESIGN_LAYOUT.chainLogo.x, 
+            DESIGN_LAYOUT.chainLogo.y, 
+            DESIGN_LAYOUT.chainLogo.maxWidth, 
+            DESIGN_LAYOUT.chainLogo.maxHeight, 
+            themeColor,
+            true // 중앙 정렬
+          );
           if (isCancelled) return;
         }
       }
 
-      // 5. 상영 포맷 배지
+      // 5. 상영 포맷 로고 - 투명 배경 & 테마 색상 적용
       if (format) {
         const formatData = SCREENING_FORMATS.find(f => f.value === format);
         if (formatData && formatData.file) {
-          const { x, y, padding, borderRadius, maxWidth, maxHeight } = DESIGN_LAYOUT.formatBadge;
-          const badgeWidth = maxWidth + padding * 2;
-          const badgeHeight = maxHeight + padding * 2;
-
-          ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)';
-          roundRect(ctx, x, y, badgeWidth, badgeHeight, borderRadius);
-          ctx.fill();
-
-          await drawLogo(ctx, `/assets/formats/${formatData.file}`, x + padding, y + padding, maxWidth, maxHeight);
+          const { x, y, badgeWidth, badgeHeight, padding } = DESIGN_LAYOUT.formatBadge;
+          const maxWidth = badgeWidth - (padding * 2);
+          const maxHeight = badgeHeight - (padding * 2);
+          
+          // 배경 없이 로고만 렌더링 (사용자 요청: 배경색 무조건 투명)
+          // 색상은 왼쪽 극장 로고와 동일하게 themeColor 적용
+          await drawLogo(
+            ctx, 
+            `/assets/formats_transparent/${formatData.file}`, 
+            x + padding, 
+            y + padding, 
+            maxWidth, 
+            maxHeight, 
+            themeColor,
+            true // 중앙 정렬
+          );
           if (isCancelled) return;
         }
       }
 
-      // === 하단 프리미엄 정보 패널 ===
+
+      // === 정보 렌더링 ===
       ctx.textBaseline = 'top';
       ctx.textAlign = 'left';
-
-      const textColor = isDark ? '#FFFFFF' : '#111111';
-      const shadowColor = isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.5)';
-      const dividerColor = isDark ? `rgba(255, 255, 255, ${DESIGN_LAYOUT.divider.opacity})` : `rgba(0, 0, 0, ${DESIGN_LAYOUT.divider.opacity})`;
+      ctx.fillStyle = themeColor;
       
-      // 6. 넘버링 & 별점 (수집용 티켓 감성)
-      ctx.font = `${DESIGN_LAYOUT.numbering.fontWeight} ${DESIGN_LAYOUT.numbering.fontSize}px "Pretendard", system-ui, sans-serif`;
-      ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
-      fillTextWithSpacing(ctx, `${DESIGN_LAYOUT.numbering.prefix} 001`, DESIGN_LAYOUT.numbering.x, DESIGN_LAYOUT.numbering.y, DESIGN_LAYOUT.numbering.letterSpacing);
-      
-      drawStars(ctx, DESIGN_LAYOUT.rating.x, DESIGN_LAYOUT.rating.y + (DESIGN_LAYOUT.rating.size / 2), DESIGN_LAYOUT.rating.size, DESIGN_LAYOUT.rating.gap, isDark);
+      // 6. 별점 (사용자 입력값 반영)
+      drawStars(ctx, DESIGN_LAYOUT.rating.x, DESIGN_LAYOUT.rating.y + (DESIGN_LAYOUT.rating.size / 2), DESIGN_LAYOUT.rating.size, DESIGN_LAYOUT.rating.gap, rating, themeColor);
 
       // 7. 영화 제목
       if (movieTitle) {
-        ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; ctx.shadowBlur = 6; ctx.shadowColor = shadowColor;
         ctx.font = `${DESIGN_LAYOUT.movieTitle.fontWeight} ${DESIGN_LAYOUT.movieTitle.fontSize}px "Pretendard", system-ui, sans-serif`;
-        ctx.fillStyle = textColor;
         wrapText(ctx, movieTitle, DESIGN_LAYOUT.movieTitle.x, DESIGN_LAYOUT.movieTitle.y, DESIGN_LAYOUT.movieTitle.maxWidth, DESIGN_LAYOUT.movieTitle.fontSize * DESIGN_LAYOUT.movieTitle.lineHeight);
       }
 
-      ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; ctx.shadowBlur = 0; 
-
       // 8. 구분선 (Divider)
-      ctx.fillStyle = dividerColor;
+      ctx.globalAlpha = 0.3;
       ctx.fillRect(DESIGN_LAYOUT.divider.x, DESIGN_LAYOUT.divider.y, DESIGN_LAYOUT.divider.width, DESIGN_LAYOUT.divider.thickness);
+      ctx.globalAlpha = 1.0;
 
       // 9. 메타데이터 (날짜, 극장, 상영관, 좌석)
       const metaY = DESIGN_LAYOUT.metadata.y;
@@ -170,7 +166,6 @@ const PhototicketCanvas = forwardRef<HTMLCanvasElement, PhototicketCanvasProps>(
       
       if (primaryText.length > 0) {
         ctx.font = `${DESIGN_LAYOUT.metadata.primary.fontWeight} ${DESIGN_LAYOUT.metadata.primary.fontSize}px "Pretendard", system-ui, sans-serif`;
-        ctx.fillStyle = textColor;
         fillTextWithSpacing(ctx, primaryText.join('   |   '), DESIGN_LAYOUT.metadata.x, metaY, DESIGN_LAYOUT.metadata.primary.letterSpacing);
       }
 
@@ -180,18 +175,15 @@ const PhototicketCanvas = forwardRef<HTMLCanvasElement, PhototicketCanvasProps>(
 
       if (secondaryText.length > 0) {
         ctx.font = `${DESIGN_LAYOUT.metadata.secondary.fontWeight} ${DESIGN_LAYOUT.metadata.secondary.fontSize}px "Pretendard", system-ui, sans-serif`;
-        ctx.globalAlpha = DESIGN_LAYOUT.metadata.secondary.opacity;
+        ctx.globalAlpha = 0.7;
         fillTextWithSpacing(ctx, secondaryText.join('   |   '), DESIGN_LAYOUT.metadata.x, metaY + lh, DESIGN_LAYOUT.metadata.secondary.letterSpacing);
         ctx.globalAlpha = 1.0; 
       }
 
-      // 10. 장식용 바코드
-      drawBarcode(ctx, DESIGN_LAYOUT.barcode.x, DESIGN_LAYOUT.barcode.y, DESIGN_LAYOUT.barcode.width, DESIGN_LAYOUT.barcode.height, isDark);
+      // 10. TCG 프레임 (Inner Border) - 테두리 색상 적용
+      drawTCGBorder(ctx, themeColor);
 
-      // 11. TCG 프레임 (Inner Border)
-      drawTCGBorder(ctx, isDark);
-
-      // 12. 텍스처 (후가공) 오버레이 적용
+      // 11. 텍스처 (후가공) 오버레이 적용 - 드라마틱 효과
       applyTextureOverlay(ctx, texture, TARGET_WIDTH, TARGET_HEIGHT);
     };
 
@@ -200,7 +192,7 @@ const PhototicketCanvas = forwardRef<HTMLCanvasElement, PhototicketCanvasProps>(
     return () => {
       isCancelled = true;
     };
-  }, [croppedImageUrl, movieTitle, watchDate, theater, chain, format, texture, screen, seat]);
+  }, [croppedImageUrl, movieTitle, watchDate, theater, chain, format, texture, rating, posterOpacity, themeColor, screen, seat]);
 
   return (
     <div className="flex justify-center">
