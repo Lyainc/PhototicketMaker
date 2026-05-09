@@ -98,6 +98,9 @@ export default function Home() {
                     ref={canvasRef}
                     croppedImageUrl={state.croppedImageUrl} // 이미지는 딜레이 없이 즉시 렌더링
                     movieTitle={debouncedState.movieInfo.title}
+                    movieTitleOg={debouncedState.movieInfo.titleOg}
+                    actors={debouncedState.movieInfo.actors}
+                    releaseDate={debouncedState.movieInfo.releaseDate}
                     watchDate={debouncedState.movieInfo.watchDate}
                     theater={debouncedState.movieInfo.theater}
                     screen={debouncedState.movieInfo.screen}

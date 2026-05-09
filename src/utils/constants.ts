@@ -74,77 +74,93 @@ export const DESIGN_LAYOUT = {
     radius: 16,
   },
 
+  // === HEADER AREA (영화관 정보) ===
   // 극장 체인 로고 (상단 좌측)
   chainLogo: {
     x: 60,
     y: 70,
-    maxWidth: 180,
-    maxHeight: 60,
+    maxWidth: 160,
+    maxHeight: 40,
+  },
+  
+  // 극장 메타데이터 (상단 우측 - 관람일, 극장명, 상영관, 좌석)
+  headerMetadata: {
+    x: 900, // right aligned
+    y: 78,
+    fontSize: 22,
+    fontWeight: '500',
+    letterSpacing: 1.5,
+    opacity: 0.9,
   },
 
-  // 상영 포맷 배지 (우측 상단)
-  // 극장 로고와 세로 중앙 정렬을 위해 y값 조정 (70 + 60/2 = 100, 100 - 56/2 = 72)
-  formatBadge: {
-    x: 708,
-    y: 72,
-    badgeWidth: 192,
-    badgeHeight: 56,
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  // === FOOTER AREA (영화 정보) ===
+  // 원어 제목
+  movieTitleOg: {
+    x: 60,
+    y: 1130,
+    maxWidth: 660,
+    fontSize: 28,
+    fontWeight: '500',
+    letterSpacing: 2,
+    opacity: 0.7,
   },
 
-  // 티켓 스터브 (하단 정보 영역) 패널 시작 위치
-  stub: {
-    y: 1080,
-    height: 397, // 1477 - 1080
-  },
-
-  // 별점 (메가박스 오리지널 티켓 스타일)
-  // 인쇄 시 뭉개지지 않도록 사이즈와 간격 확대
-  rating: {
-    x: 680,
-    y: 1140,
-    size: 34,
-    gap: 12,
-  },
-
-  // 영화 제목
-  // 카드 사이즈에서 시인성을 갖기 위해 폰트 대폭 확대
+  // 메인 영화 제목
   movieTitle: {
     x: 60,
-    y: 1210,
-    maxWidth: 840,
-    fontSize: 70,
+    y: 1170,
+    maxWidth: 660,
+    fontSize: 64,
     fontWeight: '800',
     lineHeight: 1.15,
   },
 
-  // 구분선 (제목과 메타데이터 분리)
-  divider: {
+  // 별점
+  rating: {
     x: 60,
-    y: 1320,
-    width: 840,
-    thickness: 3,
-    opacity: 0.15,
+    y: 1290,
+    size: 26,
+    gap: 8,
   },
 
-  // 메타데이터 그룹 (관람일, 극장, 상영관, 좌석)
-  metadata: {
+  // 주연 배우
+  actors: {
     x: 60,
-    y: 1360,
-    lineHeight: 52,
-    primary: {
-      fontSize: 32,
-      fontWeight: '600',
-      letterSpacing: 2,
-    },
-    secondary: {
-      fontSize: 28,
-      fontWeight: '400',
-      opacity: 0.7,
-      letterSpacing: 1,
-    }
+    y: 1340,
+    maxWidth: 840,
+    fontSize: 22,
+    fontWeight: '400',
+    opacity: 0.6,
+  },
+
+  // 개봉일 (Footer 좌측 하단)
+  releaseDate: {
+    x: 60,
+    y: 1390,
+    fontSize: 22,
+    fontWeight: '400',
+    letterSpacing: 1,
+    opacity: 0.6,
+  },
+
+  // 상영 포맷 배지 (하단 우측)
+  formatBadge: {
+    x: 900, // right edge
+    y: 1375,
+    badgeWidth: 160,
+    badgeHeight: 46,
+    padding: 0,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
+  },
+
+  // 구분선 (사용 안 할 수도 있지만 옵션으로 남겨둠)
+  divider: {
+    x: 60,
+    y: 1260,
+    width: 840,
+    thickness: 2,
+    opacity: 0.2,
   },
 
   // 여백

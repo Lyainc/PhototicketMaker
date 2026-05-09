@@ -5,11 +5,14 @@
 // 영화 정보
 export interface MovieInfo {
   title: string;
-  watchDate: string; // YYYY. MM. DD.
+  titleOg?: string; // 원어 제목
+  actors?: string; // 주연배우
+  releaseDate?: string; // 최초 개봉일 (YYYY. MM. DD.)
+  watchDate: string; // 관람일 YYYY. MM. DD.
   theater: string;
   screen?: string; // 예: 4관, IMAX관
   seat?: string;   // 예: G14, G15
-  rating: number;  // 별점 (0~5)
+  rating: number;  // 별점 (0~5, 0.5 단위)
 }
 
 // 컴포넌트 선택
@@ -56,6 +59,7 @@ export interface KobisMovie {
   genreAlt: string;       // 장르 (SF,드라마,모험)
   nationAlt: string;      // 국가
   prdtYear: string;       // 제작년도
+  actors?: string;        // 주연배우 (상세 정보 조회 시)
 }
 
 // Window 타입 확장 (Canvas 노출 제거 예정 - forwardRef 사용)

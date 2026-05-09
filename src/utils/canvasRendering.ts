@@ -387,8 +387,23 @@ export function drawStars(
     ctx.lineTo(cx, cy - outerRadius);
     ctx.closePath();
     
-    if (isFilled) {
+    if (rating >= i + 1) {
       ctx.fill();
+    } else if (rating > i) {
+      // 반 개 채우기: 클리핑 활용
+      ctx.save();
+      // 별 모양 클리핑
+      ctx.clip();
+      
+      // 왼쪽 반만 채우기
+      ctx.fillRect(cx - outerRadius, cy - outerRadius, outerRadius, outerRadius * 2);
+      
+      ctx.restore();
+      
+      // 테두리는 전체 다시 그리기
+      ctx.globalAlpha = 0.3;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
     } else {
       ctx.globalAlpha = 0.3;
       ctx.stroke();

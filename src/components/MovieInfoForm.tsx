@@ -67,14 +67,59 @@ export default function MovieInfoForm({ movieInfo, onChange }: MovieInfoFormProp
     }
   };
 
-  const handleSelectMovie = (movie: KobisMovie) => {
-    onChange({ title: movie.movieNm });
+  const handleSelectMovie = async (movie: KobisMovie) => {
+    // 기본 정보 먼저 업데이트 (상세 API 호출 전 가능한 모든 데이터 반영하여 체감 속도 개선)
+    onChange({
+      title: movie.movieNm,
+      titleOg: movie.movieNmEn || '',
+      releaseDate: formatOpenDt(movie.openDt) || '',
+    });
     setShowResults(false);
+
+    try {
+      setIsSearching(true);
+      const res = await fetch(`/api/kobis/detail?movieCd=${movie.movieCd}`);
+      if (res.ok) {
+        const data = await res.json();
+        const info = data.movieInfoResult?.movieInfo;
+        if (info) {
+          const isKorean = info.nations?.some((n: any) => n.nationNm === '한국');
+          const actors = info.actors?.slice(0, 3).map((a: any) => {
+            if (!isKorean && a.peopleNmEn) {
+              return a.peopleNmEn;
+            }
+            return a.peopleNm;
+          }).join(', ') || '';
+
+          // 배우 정보만 추가로 업데이트
+          onChange({ actors: actors });
+        }
+      }
+    } catch (error) {
+      console.error('영화 상세 정보 검색 오류:', error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const formatOpenDt = (dt: string) => {
     if (!dt || dt.length !== 8) return dt;
-    return `${dt.substring(0, 4)}.${dt.substring(4, 6)}.${dt.substring(6, 8)}`;
+    return `${dt.substring(0, 4)}. ${dt.substring(4, 6)}. ${dt.substring(6, 8)}.`;
+  };
+
+  // 평점 클릭/호버 처리를 위한 상태
+  const [hoverRating, setHoverRating] = useState(0);
+
+  const handleRatingClick = (e: React.MouseEvent<HTMLDivElement>, starIndex: number) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isHalf = e.clientX - rect.left < rect.width / 2;
+    onChange({ rating: isHalf ? starIndex - 0.5 : starIndex });
+  };
+
+  const handleRatingHover = (e: React.MouseEvent<HTMLDivElement>, starIndex: number) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isHalf = e.clientX - rect.left < rect.width / 2;
+    setHoverRating(isHalf ? starIndex - 0.5 : starIndex);
   };
 
   return (
@@ -132,7 +177,7 @@ export default function MovieInfoForm({ movieInfo, onChange }: MovieInfoFormProp
                           {movie.movieNm}
                         </div>
                         <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                          {movie.openDt && <span>개봉: {formatOpenDt(movie.openDt)}</span>}
+                          {movie.openDt && <span>개봉: {formatOpenDt(movie.openDt).replace(/ /g, '')}</span>}
                           {movie.genreAlt && (
                             <>
                               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
@@ -153,6 +198,48 @@ export default function MovieInfoForm({ movieInfo, onChange }: MovieInfoFormProp
               ) : null}
             </div>
           )}
+        </div>
+
+        <div>
+          <label htmlFor="movieTitleOg" className="block text-sm font-medium mb-1">
+            원어 제목
+          </label>
+          <input
+            id="movieTitleOg"
+            type="text"
+            value={movieInfo.titleOg || ''}
+            onChange={(e) => onChange({ titleOg: e.target.value })}
+            placeholder="Interstellar"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="actors" className="block text-sm font-medium mb-1">
+            주연 배우
+          </label>
+          <input
+            id="actors"
+            type="text"
+            value={movieInfo.actors || ''}
+            onChange={(e) => onChange({ actors: e.target.value })}
+            placeholder="매튜 맥커너히, 앤 해서웨이, 마이클 케인"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="releaseDate" className="block text-sm font-medium mb-1">
+            개봉일
+          </label>
+          <input
+            id="releaseDate"
+            type="text"
+            value={movieInfo.releaseDate || ''}
+            onChange={(e) => onChange({ releaseDate: e.target.value })}
+            placeholder="2014. 11. 06."
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         <div>
@@ -187,27 +274,41 @@ export default function MovieInfoForm({ movieInfo, onChange }: MovieInfoFormProp
           <label className="block text-sm font-medium mb-1">
             관람 평점
           </label>
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => onChange({ rating: star })}
-                className="focus:outline-none transition-transform hover:scale-110"
-              >
-                <svg
-                  className={`w-8 h-8 ${
-                    star <= (movieInfo.rating || 0) ? 'text-yellow-400' : 'text-gray-300'
-                  }`}
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              </button>
-            ))}
-            <span className="ml-2 text-sm text-gray-500 self-center">
-              {movieInfo.rating || 0} / 5
+          <div className="flex items-center gap-4">
+            <div 
+              className="flex gap-1"
+              onMouseLeave={() => setHoverRating(0)}
+            >
+              {[1, 2, 3, 4, 5].map((star) => {
+                const currentRating = hoverRating || movieInfo.rating || 0;
+                
+                return (
+                  <div 
+                    key={star} 
+                    className="relative w-8 h-8 cursor-pointer"
+                    onClick={(e) => handleRatingClick(e, star)}
+                    onMouseMove={(e) => handleRatingHover(e, star)}
+                  >
+                    {/* 빈 별 (배경) */}
+                    <svg className="w-8 h-8 text-gray-300 absolute top-0 left-0 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    
+                    {/* 채워진 별 (Foreground) - rating에 따라 width 클리핑 */}
+                    <div 
+                      className="absolute top-0 left-0 overflow-hidden h-8 pointer-events-none transition-all duration-100"
+                      style={{ width: currentRating >= star ? '100%' : currentRating >= star - 0.5 ? '50%' : '0%' }}
+                    >
+                      <svg className="w-8 h-8 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <span className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+              {(hoverRating || movieInfo.rating).toFixed(1)} / 5.0
             </span>
           </div>
         </div>
