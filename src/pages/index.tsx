@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo, useCallback } from 'react';
 import PhototicketCanvas from '@/components/PhototicketCanvas';
 import ImageUploader from '@/components/ImageUploader';
 import MovieInfoForm from '@/components/MovieInfoForm';
@@ -20,42 +20,78 @@ export default function Home() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 이미지 업로드 시 색상 추출
   useEffect(() => {
-    if (state.croppedImageUrl) {
-      extractColors(state.croppedImageUrl, 2).then((colors) => {
-        setRecommendedColors(colors);
-      });
-    }
+    if (!state.croppedImageUrl) return;
+    let cancelled = false;
+    extractColors(state.croppedImageUrl, 2).then((colors) => {
+      if (!cancelled) setRecommendedColors(colors);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [state.croppedImageUrl, setRecommendedColors]);
 
-  // 다운로드 핸들러
-  const handleDownload = () => {
-    if (!canvasRef.current || !state.croppedImageUrl) {
-      alert('먼저 이미지를 업로드하세요');
-      return;
-    }
-
+  const handleDownload = useCallback(() => {
+    if (!canvasRef.current || !state.croppedImageUrl) return;
     const filename = `phototicket_${state.movieInfo.title || 'untitled'}.jpg`;
     downloadCanvasAsJPEG(canvasRef.current, filename);
-  };
+  }, [state.croppedImageUrl, state.movieInfo.title]);
+
+  const issueDate = useMemo(
+    () =>
+      new Date()
+        .toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
+        .toUpperCase(),
+    []
+  );
+
+  const ready = !!state.croppedImageUrl;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-8">
-      <div className="max-w-7xl mx-auto px-4 py-6 lg:p-8">
-        <header className="mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">🎬 포토티켓 메이커</h1>
-          <p className="text-sm lg:text-base text-gray-600 mt-2">
-            영화 포스터를 업로드하고 정보를 입력하면 CGV 포토플레이용 포토티켓을 생성합니다
-          </p>
-        </header>
+    <div className="relative min-h-screen overflow-x-hidden">
+      {/* Ambient gold halo */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed -top-40 left-1/2 -z-10 h-[600px] w-[1200px] -translate-x-1/2 rounded-full opacity-[0.07] blur-3xl"
+        style={{ background: 'radial-gradient(closest-side, #E5B469, transparent)' }}
+      />
 
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8">
-          {/* 입력 폼 영역 */}
-          <div className="space-y-6 order-2 lg:order-1">
+      {/* Masthead */}
+      <header className="border-b border-white/[0.06]">
+        <div className="mx-auto flex max-w-[1400px] items-end justify-between px-5 py-5 md:px-10 md:py-8">
+          <div className="flex items-center gap-3 md:gap-5">
+            <div
+              aria-hidden
+              className="hidden h-7 w-7 shrink-0 rotate-45 border border-gold/70 md:block"
+            />
+            <div>
+              <p className="text-mono text-[10px] uppercase tracking-widest text-bone-400">
+                Issue No. 03 · {issueDate}
+              </p>
+              <h1 className="text-display mt-1 text-2xl font-light italic leading-none tracking-tightest text-paper md:text-[34px]">
+                Phototicket <span className="not-italic font-normal">Maker</span>
+              </h1>
+            </div>
+          </div>
+          <div className="hidden items-center gap-6 text-mono text-[11px] uppercase tracking-widest text-bone-400 md:flex">
+            <span>EDITORIAL · v0.3</span>
+            <span className="h-1 w-1 rounded-full bg-bone-400/60" />
+            <span>{ready ? <span className="text-gold">● LIVE</span> : 'STANDBY'}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main grid */}
+      <div className="mx-auto max-w-[1400px] px-5 pb-32 pt-8 md:px-10 md:pb-16 md:pt-12 lg:pt-16">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)] lg:gap-16">
+          {/* Form column */}
+          <div className="order-2 space-y-12 lg:order-1 lg:space-y-16">
+            <Intro />
+
             <ImageUploader
               onUpload={handleImageUpload}
               isProcessing={isProcessing}
+              hasImage={ready}
             />
 
             <MovieInfoForm
@@ -69,34 +105,26 @@ export default function Home() {
               onChange={updateComponents}
             />
 
+            {/* Desktop save action */}
             <div className="hidden lg:block">
-              <button
-                onClick={handleDownload}
-                disabled={!state.croppedImageUrl}
-                className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-lg active:scale-[0.98]"
-              >
-                ⬇️ JPEG 다운로드 (960×1477px)
-              </button>
+              <SaveButton onClick={handleDownload} disabled={!ready} />
             </div>
+
+            <Colophon />
           </div>
 
-          {/* 프리뷰 영역 - 모바일에서는 상단 고정(Sticky) 또는 우선 배치 */}
-          <div className="order-1 lg:order-2 lg:sticky lg:top-8 self-start">
-            <div className="bg-white p-4 lg:p-6 rounded-2xl shadow-md border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg lg:text-xl font-bold text-gray-800">미리보기</h2>
-                {state.croppedImageUrl && (
-                  <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium">
-                    실시간 반영 중
-                  </span>
-                )}
-              </div>
-              
-              <div className="relative group">
-                {state.croppedImageUrl ? (
+          {/* Preview column */}
+          <div className="order-1 lg:order-2">
+            <div className="lg:sticky lg:top-10">
+              <PreviewFrame
+                ready={ready}
+                live={ready}
+                title={debouncedState.movieInfo.title}
+              >
+                {ready ? (
                   <PhototicketCanvas
                     ref={canvasRef}
-                    croppedImageUrl={state.croppedImageUrl} // 이미지는 딜레이 없이 즉시 렌더링
+                    croppedImageUrl={state.croppedImageUrl}
                     movieTitle={debouncedState.movieInfo.title}
                     movieTitleOg={debouncedState.movieInfo.titleOg}
                     actors={debouncedState.movieInfo.actors}
@@ -106,6 +134,7 @@ export default function Home() {
                     screen={debouncedState.movieInfo.screen}
                     seat={debouncedState.movieInfo.seat}
                     rating={debouncedState.movieInfo.rating}
+                    showRating={debouncedState.movieInfo.showRating}
                     chain={debouncedState.components.chain}
                     format={debouncedState.components.format}
                     texture={debouncedState.components.texture}
@@ -113,41 +142,167 @@ export default function Home() {
                     themeColor={debouncedState.components.themeColor}
                   />
                 ) : (
-                  <div className="flex items-center justify-center aspect-[0.65/1] w-full max-w-[320px] mx-auto bg-gray-100 rounded-xl border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 text-center text-sm p-4">
-                      이미지를 업로드하면<br />여기에 표시됩니다
-                    </p>
-                  </div>
+                  <EmptyPreview />
                 )}
-              </div>
+              </PreviewFrame>
 
-              {/* 모바일 전용 다운로드 버튼 (스크롤 하단 고정될 때 유용) */}
+              {/* Mobile save action — inline */}
               <div className="mt-6 lg:hidden">
-                <button
-                  onClick={handleDownload}
-                  disabled={!state.croppedImageUrl}
-                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-lg active:scale-[0.98]"
-                >
-                  ⬇️ JPEG 다운로드
-                </button>
+                <SaveButton onClick={handleDownload} disabled={!ready} />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 모바일 하단 플로팅 다운로드 버튼 (선택 사항) */}
-      {state.croppedImageUrl && (
-        <div className="lg:hidden fixed bottom-6 left-4 right-4 z-50">
+      {/* Mobile floating action — visible only when ready */}
+      {ready && (
+        <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-3 lg:hidden">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-32 bg-gradient-to-t from-ink via-ink/95 to-transparent" />
           <button
             onClick={handleDownload}
-            className="w-full bg-blue-600 text-white py-4 px-6 rounded-2xl font-bold text-lg shadow-2xl active:scale-[0.96] transition-transform flex items-center justify-center gap-2"
+            className="group flex w-full items-center justify-between gap-4 border border-gold/40 bg-ink-100 px-5 py-4 text-mono text-[11px] uppercase tracking-widest text-paper transition-all active:scale-[0.98]"
           >
-            <span>⬇️</span>
-            <span>포토티켓 저장하기</span>
+            <span className="flex items-center gap-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              Save Ticket
+            </span>
+            <span className="text-gold">→ JPEG</span>
           </button>
         </div>
       )}
     </div>
+  );
+}
+
+/* ------------------------------ Sub-components ------------------------------ */
+
+function Intro() {
+  return (
+    <section className="space-y-3 pb-2">
+      <p className="text-mono text-[10px] uppercase tracking-widest text-bone-400">
+        Vol.01 / FEATURE
+      </p>
+      <h2 className="text-display text-3xl font-light italic leading-[1.05] tracking-tightest text-paper md:text-[44px]">
+        영화의 한 장면을<br />
+        <span className="not-italic">손에 쥐는 방식.</span>
+      </h2>
+      <p className="max-w-[42ch] pt-2 text-sm leading-relaxed text-bone-400 md:text-[15px]">
+        포스터를 올리고 정보를 채우면 CGV Photoplay 규격의 프리미엄 티켓이 생성돼요.
+        업로드 즉시 미리보기에 반영되거든요.
+      </p>
+    </section>
+  );
+}
+
+function PreviewFrame({
+  children,
+  ready,
+  live,
+  title,
+}: {
+  children: React.ReactNode;
+  ready: boolean;
+  live: boolean;
+  title: string;
+}) {
+  return (
+    <div className="relative">
+      {/* Top meta */}
+      <div className="mb-4 flex items-center justify-between text-mono text-[10px] uppercase tracking-widest text-bone-400">
+        <span>PREVIEW · 960×1477</span>
+        <span className="flex items-center gap-2">
+          {live && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gold" />}
+          {live ? 'LIVE' : 'IDLE'}
+        </span>
+      </div>
+
+      {/* Frame */}
+      <div className="relative border border-white/[0.06] bg-ink-100 p-4 md:p-6">
+        {/* Corner markers */}
+        <Corner pos="top-left" />
+        <Corner pos="top-right" />
+        <Corner pos="bottom-left" />
+        <Corner pos="bottom-right" />
+
+        <div className="relative">{children}</div>
+      </div>
+
+      {/* Bottom meta */}
+      <div className="mt-4 flex items-center justify-between text-mono text-[10px] uppercase tracking-widest text-bone-400">
+        <span className="truncate pr-4">
+          {ready && title ? `// ${title}` : '// awaiting upload'}
+        </span>
+        <span>FILE_001.jpg</span>
+      </div>
+    </div>
+  );
+}
+
+function Corner({ pos }: { pos: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' }) {
+  const map: Record<string, string> = {
+    'top-left': '-top-px -left-px border-t border-l',
+    'top-right': '-top-px -right-px border-t border-r',
+    'bottom-left': '-bottom-px -left-px border-b border-l',
+    'bottom-right': '-bottom-px -right-px border-b border-r',
+  };
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-3 w-3 border-gold/60 ${map[pos]}`}
+    />
+  );
+}
+
+function EmptyPreview() {
+  return (
+    <div className="flex aspect-[0.65/1] w-full max-w-[420px] mx-auto flex-col items-center justify-center gap-4 border border-dashed border-white/[0.08] bg-ink-200/40 px-6 text-center">
+      <div className="text-mono text-[10px] uppercase tracking-widest text-bone-500">
+        [ AWAITING POSTER ]
+      </div>
+      <p className="max-w-[24ch] text-sm leading-relaxed text-bone-400">
+        포스터를 업로드하면 이곳에 티켓이 실시간으로 조판돼요.
+      </p>
+      <div className="mt-4 flex items-center gap-2 text-mono text-[10px] uppercase tracking-widest text-bone-500">
+        <span className="h-px w-6 bg-bone-500/40" />
+        <span>0.65 : 1</span>
+        <span className="h-px w-6 bg-bone-500/40" />
+      </div>
+    </div>
+  );
+}
+
+function SaveButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="group relative flex w-full items-center justify-between border border-gold/40 bg-transparent px-6 py-5 text-left transition-all hover:border-gold hover:bg-gold/[0.04] disabled:cursor-not-allowed disabled:border-white/[0.08] disabled:opacity-40"
+    >
+      <span>
+        <span className="block text-mono text-[10px] uppercase tracking-widest text-bone-400 group-hover:text-gold">
+          Export · JPEG
+        </span>
+        <span className="text-display mt-1 block text-2xl font-light italic tracking-tight text-paper">
+          Save Ticket
+        </span>
+      </span>
+      <span className="text-mono text-xs tracking-widest text-gold transition-transform group-hover:translate-x-1">
+        960 × 1477  ↓
+      </span>
+    </button>
+  );
+}
+
+function Colophon() {
+  return (
+    <footer className="border-t border-white/[0.06] pt-8 text-mono text-[10px] uppercase tracking-widest text-bone-500">
+      <div className="grid grid-cols-2 gap-y-2 md:grid-cols-4">
+        <span>Issue 03 · Editorial</span>
+        <span>Spec · 0.65:1</span>
+        <span>Engine · Canvas2D</span>
+        <span>© Phototicket</span>
+      </div>
+    </footer>
   );
 }
