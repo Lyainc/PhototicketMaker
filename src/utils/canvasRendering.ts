@@ -1,26 +1,17 @@
 import { TARGET_WIDTH, TARGET_HEIGHT, DESIGN_LAYOUT } from './constants';
 
-// 로고 이미지 엘리먼트 캐시 (중복 로딩 방지)
 const imageElementCache = new Map<string, Promise<HTMLImageElement>>();
-// 최종 렌더링된 오프스크린 캔버스 캐시 (경로 + 색상 + 크기 키값)
 const logoCanvasCache = new Map<string, HTMLCanvasElement>();
 
-/**
- * 이미지를 로드하고 캐시하는 헬퍼
- */
 function loadImage(src: string): Promise<HTMLImageElement> {
-  if (imageElementCache.has(src)) {
-    return imageElementCache.get(src)!;
-  }
+  const cached = imageElementCache.get(src);
+  if (cached) return cached;
 
   const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
-    img.onerror = () => {
-      console.warn(`Failed to load image: ${src}`);
-      reject(new Error(`Load failed: ${src}`));
-    };
+    img.onerror = () => reject(new Error(`Load failed: ${src}`));
     img.src = src;
   });
 
@@ -28,9 +19,14 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return promise;
 }
 
-/**
- * 로고를 캔버스에 그림 (배경 제거된 실루엣에 색상 입히기 및 중앙 정렬 지원)
- */
+type Align = 'left' | 'center' | 'right';
+
+function alignedX(targetX: number, boxWidth: number, contentWidth: number, align: Align) {
+  if (align === 'center') return targetX + (boxWidth - contentWidth) / 2;
+  if (align === 'right') return targetX + boxWidth - contentWidth;
+  return targetX;
+}
+
 export async function drawLogo(
   ctx: CanvasRenderingContext2D,
   src: string,
@@ -39,79 +35,53 @@ export async function drawLogo(
   targetMaxWidth: number,
   targetMaxHeight: number,
   themeColor: string = '#FFFFFF',
-  align: 'left' | 'center' | 'right' = 'center'
+  align: Align = 'center'
 ): Promise<void> {
   const cacheKey = `${src}_${themeColor}_${targetMaxWidth}_${targetMaxHeight}_${align}`;
-  
-  if (logoCanvasCache.has(cacheKey)) {
-    const cachedCanvas = logoCanvasCache.get(cacheKey)!;
-    let finalX = targetX;
-    if (align === 'center') finalX = targetX + (targetMaxWidth - cachedCanvas.width) / 2;
-    else if (align === 'right') finalX = targetX + targetMaxWidth - cachedCanvas.width;
-    
-    let finalY = targetY;
-    if (align === 'center') finalY = targetY + (targetMaxHeight - cachedCanvas.height) / 2;
-    else if (align === 'right') finalY = targetY + (targetMaxHeight - cachedCanvas.height) / 2; // Keep Y centered
-    
-    ctx.drawImage(cachedCanvas, Math.round(finalX), Math.round(finalY));
+  const cached = logoCanvasCache.get(cacheKey);
+
+  if (cached) {
+    const x = alignedX(targetX, targetMaxWidth, cached.width, align);
+    const y = targetY + (targetMaxHeight - cached.height) / 2;
+    ctx.drawImage(cached, Math.round(x), Math.round(y));
     return;
   }
 
   try {
     const img = await loadImage(src);
-    
-    // 비율 유지하며 크기 계산
+
+    // Visual-weight nudge: near-square logos look starved at a fixed height
+    // since they leave too much horizontal whitespace. Stretch the height cap
+    // up to 1.6× when the aspect ratio drops below 3:1.
     const ratio = img.width / img.height;
-    
-    // 시각적 균형(Visual Weight) 보정:
-    // 가로로 긴 로고는 높이가 낮아도 넓어서 적당해 보이지만,
-    // 정사각형에 가까운 로고는 지정된 상하폭(targetMaxHeight)에 갇히면 좌우가 너무 비어 휑해 보입니다.
-    // 이를 방지하기 위해 가로세로 비율이 일정 수치 미만일 경우 최대 높이를 1.0~1.6배까지 유동적으로 늘려줍니다.
-    let adjustedMaxHeight = targetMaxHeight;
-    if (ratio < 3.0) {
-      const multiplier = Math.min(1.6, 3.0 / ratio);
-      adjustedMaxHeight = targetMaxHeight * multiplier;
-    }
+    const adjustedMaxHeight = ratio < 3 ? targetMaxHeight * Math.min(1.6, 3 / ratio) : targetMaxHeight;
 
     const scale = Math.min(targetMaxWidth / img.width, adjustedMaxHeight / img.height);
     const w = Math.round(img.width * scale);
     const h = Math.round(img.height * scale);
-
     if (w <= 0 || h <= 0) return;
 
-    // 오프스크린 캔버스 생성 (색상 변경 및 캐싱용)
+    const x = alignedX(targetX, targetMaxWidth, w, align);
+    const y = targetY + (targetMaxHeight - h) / 2;
+
     const offCanvas = document.createElement('canvas');
     offCanvas.width = w;
     offCanvas.height = h;
     const offCtx = offCanvas.getContext('2d');
-    
-    let finalX = targetX;
-    if (align === 'center') finalX = targetX + (targetMaxWidth - w) / 2;
-    else if (align === 'right') finalX = targetX + targetMaxWidth - w;
-
-    let finalY = targetY;
-    if (align === 'center' || align === 'right') finalY = targetY + (targetMaxHeight - h) / 2; // Y is always centered for 'right' and 'center'
 
     if (!offCtx) {
-      ctx.drawImage(img, Math.round(finalX), Math.round(finalY), w, h);
+      ctx.drawImage(img, Math.round(x), Math.round(y), w, h);
       return;
     }
 
-    // 1. 캔버스 초기화 (완전 투명)
-    offCtx.clearRect(0, 0, w, h);
-    
-    // 2. 먼저 테마 색상으로 채움
+    // Tint by masking a solid theme-color fill with the logo's alpha.
     offCtx.fillStyle = themeColor;
     offCtx.fillRect(0, 0, w, h);
-    
-    // 3. 'destination-in' 모드 적용: 이미지의 불투명 영역만 남김 (마스킹)
     offCtx.globalCompositeOperation = 'destination-in';
     offCtx.drawImage(img, 0, 0, w, h);
 
-    // 캐시에 저장
     logoCanvasCache.set(cacheKey, offCanvas);
-    
-    ctx.drawImage(offCanvas, Math.round(finalX), Math.round(finalY));
+    ctx.drawImage(offCanvas, Math.round(x), Math.round(y));
   } catch (err) {
     console.warn(`Failed to process logo: ${src}`, err);
   }
@@ -157,7 +127,7 @@ export function wrapText(
   y: number,
   maxWidth: number,
   lineHeight: number
-) {
+): number {
   const words = text.split(' ');
   let line = '';
   let currentY = y;
@@ -200,7 +170,9 @@ export function wrapText(
   
   if (line.trim().length > 0) {
     ctx.fillText(line.trim(), x, currentY);
+    currentY += lineHeight;
   }
+  return currentY;
 }
 
 export function fillTextWithSpacing(
