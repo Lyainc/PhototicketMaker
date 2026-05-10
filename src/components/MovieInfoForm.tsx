@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MovieInfo, KobisMovie } from '@/types';
 import Field from './ui/Field';
 
@@ -46,7 +46,7 @@ export default function MovieInfoForm({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSearch = useCallback(async () => {
+  const handleSearch = async () => {
     if (!movieInfo.title.trim()) {
       setSearchError('검색할 영화 제목을 입력해주세요.');
       setShowResults(true);
@@ -71,7 +71,7 @@ export default function MovieInfoForm({
     } finally {
       setIsSearching(false);
     }
-  }, [movieInfo.title]);
+  };
 
   const handleSelectMovie = async (movie: KobisMovie) => {
     onChange({
@@ -224,7 +224,7 @@ export default function MovieInfoForm({
   );
 }
 
-export function formatOpenDt(dt: string) {
+function formatOpenDt(dt: string) {
   if (!dt || dt.length !== 8) return dt;
   return `${dt.substring(0, 4)}. ${dt.substring(4, 6)}. ${dt.substring(6, 8)}.`;
 }

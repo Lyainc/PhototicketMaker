@@ -16,7 +16,8 @@ export default function ColorPicker({ value, onChange, recommended }: ColorPicke
     ...(recommended[0] ? [{ label: 'Pick 1', value: recommended[0] }] : []),
     ...(recommended[1] ? [{ label: 'Pick 2', value: recommended[1] }] : []),
   ];
-  const isCustom = !swatches.some((s) => s.value.toLowerCase() === value.toLowerCase());
+  const lowerValue = value.toLowerCase();
+  const isCustom = !swatches.some((s) => s.value.toLowerCase() === lowerValue);
   const displayHex = value.toUpperCase();
 
   return (
@@ -26,7 +27,7 @@ export default function ColorPicker({ value, onChange, recommended }: ColorPicke
       </span>
       <div className="flex flex-wrap items-center gap-2.5">
         {swatches.map((s) => {
-          const active = value.toLowerCase() === s.value.toLowerCase();
+          const active = s.value.toLowerCase() === lowerValue;
           return (
             <button
               key={s.value}

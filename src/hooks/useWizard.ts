@@ -78,11 +78,7 @@ export function useWizard({ state, pendingFetch }: UseWizardOptions): UseWizard 
   );
 
   const goNext = useCallback(() => {
-    setStep((prev) => {
-      if (prev >= TOTAL_STEPS) return prev;
-      // Re-evaluate gate at click time using a stale-safe check via current state snapshot.
-      return ((prev + 1) as WizardStep);
-    });
+    setStep((prev) => (prev >= TOTAL_STEPS ? prev : ((prev + 1) as WizardStep)));
   }, []);
 
   const goPrev = useCallback(() => {

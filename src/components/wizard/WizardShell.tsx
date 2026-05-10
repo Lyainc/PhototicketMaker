@@ -51,7 +51,8 @@ export default function WizardShell() {
     }
   }, [photo.state.croppedImageUrl, photo.state.movieInfo.title, photo.state.components.layout]);
 
-  const ready = !!photo.state.croppedImageUrl;
+  const croppedImageUrl = photo.state.croppedImageUrl;
+  const ready = !!croppedImageUrl;
   const isStep4 = wizard.step === 4;
 
   return (
@@ -107,10 +108,10 @@ export default function WizardShell() {
                 }
               >
                 <PreviewPanel layoutId={photo.debouncedState.components.layout}>
-                  {ready ? (
+                  {croppedImageUrl ? (
                     <TicketRenderer
                       ref={ticketRef}
-                      croppedImageUrl={photo.state.croppedImageUrl!}
+                      croppedImageUrl={croppedImageUrl}
                       movieInfo={photo.debouncedState.movieInfo}
                       components={photo.debouncedState.components}
                     />
