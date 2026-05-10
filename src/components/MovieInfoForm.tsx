@@ -6,15 +6,27 @@ import Field from './ui/Field';
 interface MovieInfoFormProps {
   movieInfo: MovieInfo;
   onChange: (info: Partial<MovieInfo>) => void;
+  /** Reports KOBIS detail-fetch in-flight state so a parent wizard can gate "Next" */
+  onPendingFetchChange?: (pending: boolean) => void;
 }
 
-export default function MovieInfoForm({ movieInfo, onChange }: MovieInfoFormProps) {
+export default function MovieInfoForm({ movieInfo, onChange, onPendingFetchChange }: MovieInfoFormProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<KobisMovie[]>([]);
   const [searchError, setSearchError] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
+  const [isFetchingDetail, setIsFetchingDetail] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    onPendingFetchChange?.(isFetchingDetail);
+  }, [isFetchingDetail, onPendingFetchChange]);
+
+  // Clear pending flag on unmount so the wizard isn't left gated.
+  useEffect(() => {
+    return () => onPendingFetchChange?.(false);
+  }, [onPendingFetchChange]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -66,6 +78,7 @@ export default function MovieInfoForm({ movieInfo, onChange }: MovieInfoFormProp
 
     try {
       setIsSearching(true);
+      setIsFetchingDetail(true);
       const res = await fetch(`/api/kobis/detail?movieCd=${movie.movieCd}`);
       if (!res.ok) return;
       const data = await res.json();
@@ -84,6 +97,7 @@ export default function MovieInfoForm({ movieInfo, onChange }: MovieInfoFormProp
       console.error('영화 상세 정보 검색 오류:', error);
     } finally {
       setIsSearching(false);
+      setIsFetchingDetail(false);
     }
   };
 
