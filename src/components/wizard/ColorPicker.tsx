@@ -10,8 +10,6 @@ const PRESETS = [
   { label: 'Gold', value: '#E5B469' },
 ];
 
-const HEX_INPUT_PATTERN = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
-
 export default function ColorPicker({ value, onChange, recommended }: ColorPickerProps) {
   const swatches = [
     ...PRESETS,
@@ -99,9 +97,8 @@ export default function ColorPicker({ value, onChange, recommended }: ColorPicke
           type="text"
           value={displayHex.replace('#', '')}
           onChange={(e) => {
-            const next = `#${e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6)}`;
-            if (HEX_INPUT_PATTERN.test(next)) onChange(next);
-            else onChange(next); // accept partial input; rendering may fall back to default if invalid
+            const sanitized = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+            onChange(`#${sanitized}`);
           }}
           maxLength={6}
           aria-label="Hex color"
