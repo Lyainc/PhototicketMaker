@@ -26,7 +26,6 @@
     --r-field: 12px;
     --r-card: 18px;
     --r-modal: 22px;
-    --shadow-card: 0 1px 2px rgba(44,38,34,0.05), 0 12px 40px -24px rgba(44,38,34,0.18);
 
     /* === Legacy dark tokens (Phase 5에서 사용처 정리 후 제거) === */
     --ink: #0E0E10;

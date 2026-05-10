@@ -57,15 +57,11 @@ module.exports = {
           400: '#A07835',
         },
         burn: { DEFAULT: '#C75A3F' },
-        border: '#E5DFD3',  // wizard border (라이트)
+        hairline: '#E5DFD3',  // wizard 라이트 테두리. 'border' 토큰명은 Tailwind Preflight의 borderColor.DEFAULT를 변형해 legacy 다크 컴포넌트를 깨뜨리므로 회피
       },
       fontFamily: {
         sans: ['var(--font-sans)', '"Pretendard Variable"', 'Pretendard', 'system-ui', '"Apple SD Gothic Neo"', '"Noto Sans KR"', 'sans-serif'],
         mono: ['var(--font-mono)', '"JetBrains Mono"', 'ui-monospace', 'Menlo', 'monospace'],
-        // Legacy display/serif/inter — Phase 4~5에서 사용처 정리 후 제거
-        display: ['"Fraunces"', '"Pretendard Variable"', 'Pretendard', 'Georgia', 'serif'],
-        serif: ['"Cormorant Garamond"', '"Times New Roman"', 'Georgia', 'serif'],
-        inter: ['"Inter"', '"Pretendard Variable"', '"Helvetica Neue"', 'sans-serif'],
       },
       borderRadius: {
         field: '12px',

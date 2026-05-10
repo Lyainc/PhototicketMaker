@@ -8,14 +8,14 @@ const pretendard = localFont({
   src: '../../public/fonts/PretendardVariable.woff2',
   variable: '--font-sans',
   display: 'swap',
-  weight: '45 920',
+  weight: '45 920', // Pretendard Variable wght axis range
 });
 
 const jetBrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500'],
 });
 
 export default function App({ Component, pageProps }: AppProps) {
