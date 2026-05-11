@@ -34,6 +34,7 @@ bun run start   # Run production server (after build)
   - Hooks: `camelCase` (e.g., `usePhototicket.ts`)
   - Utils: `camelCase` (e.g., `captureToImage.ts`, `layouts.ts`)
 - **Types**: Define types locally in `src/types/index.ts` if shared. Use implicit inference where appropriate.
+- **Inline style — no `font` shorthand**: Always split into `fontWeight` / `fontStyle` / `fontSize` / `fontFamily`. CSS `font` shorthand resets `line-height` to `normal`, which collides with a sibling `lineHeight` prop and triggers React's "Removing font lineHeight" warning at every rerender.
 
 ### 🖼️ Core Mechanisms (4-Mood Ticket Rendering)
 - **Layout catalog**: `src/utils/layouts.ts` — `LAYOUTS` defines 4 mood ids (`minimal`/`criterion`/`35mm`/`editorial`) with dimensions and orientation. `LayoutId` union lives in `src/types/index.ts`.
@@ -43,6 +44,7 @@ bun run start   # Run production server (after build)
 - **Picker**: `src/components/LayoutPicker.tsx` — typed `Record<LayoutId, ...>` thumbnail registry; renaming a layout id breaks the lookup at compile time.
 - **Export**: `src/utils/captureToImage.ts` — awaits `document.fonts.ready` + image loads, then dynamically imports `html-to-image` and forces `transform: 'none'` during capture (otherwise the preview scale wrapper distorts output). Output is a JPEG data URL at the layout's natural pixel dimensions × `pixelRatio: 2`.
 - **Memory Management**: Always `URL.revokeObjectURL` on blob URLs created for cropped images. Export uses a `data:` URL via anchor element (auto-GC'd, no revoke needed).
+- **Asset manifest (auto-generated)**: `public/assets/{chains,formats}_transparent/` filenames are the single source of truth. Pattern `<value>_<label>.png` (value = `[a-z0-9-]+` slug, label = picker display string). `scripts/generate-asset-manifest.ts` scans these folders and emits `src/utils/assets.generated.ts` (gitignored). `predev` / `prebuild` hooks run it automatically; `bun run gen:assets` for explicit runs. `constants.ts`, pickers, and `ChainStamp` / `FormatStamp` derive everything from the manifest — drop a file in, picker updates itself. Filename violations / duplicate values throw at generator time. Spec: `docs/ASSETS.md`.
 
 ### 🚧 Current Project Status
 - **Completed**: MVP + KOBIS API + Manual Cropping + TCG Premium Textures + Editorial Cinema redesign + 4-Mood layout system.
