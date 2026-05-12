@@ -84,7 +84,8 @@ export function FormatStamp({
   const entry = FORMAT_INDEX.get(format);
   if (!entry?.file) return null;
   const src = `/assets/formats_transparent/${entry.file}`;
-  const h = 32 * size;
+  // Base 52 (vs ChainStamp's 38): format glyphs are wide/thin so they read smaller at equal height.
+  const h = 52 * size;
 
   if (surface === 'dark') {
     return (
@@ -452,10 +453,6 @@ export function fallbackBookingNumber(seed: string): string {
 
 export function resolveBookingNo(d: MovieInfo): string {
   return d.bookingNumber || fallbackBookingNumber(d.title || 'phototicket');
-}
-
-export function compactDate(s: string | undefined): string {
-  return (s ?? '').replace(/\s+/g, '');
 }
 
 export function pickTitleSize(len: number, sizes: [number, number, number, number]): number {

@@ -9,10 +9,10 @@ import {
   MoodProps,
   PerforationStrip,
   Poster,
-  compactDate,
   pickTitleSize,
   resolveBookingNo,
 } from './_shared';
+import { formatDate } from '@/utils/dateFormat';
 
 const PAPER = '#f4ede0';
 const PAPER_DEEP = '#1a1612';
@@ -25,6 +25,12 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl }: Moo
   const accent = themeColor.toLowerCase() === '#ffffff' ? '#a8312a' : themeColor;
   const titleSize = pickTitleSize(d.title.length, [124, 102, 80, 60]);
   const bookingNo = resolveBookingNo(d);
+  const watchToken = d.watchDateFormat || 'kr-compact';
+  const releaseToken = d.releaseDateFormat || 'kr-compact';
+  const releaseGran = d.releaseDateGranularity || 'date';
+  const watchDateClean = formatDate(d.watchDate, watchToken, 'date');
+  const releaseClean = formatDate(d.releaseDate, releaseToken, releaseGran);
+  const reissueClean = d.isReissue ? formatDate(d.reissueDate, releaseToken, releaseGran) : '';
 
   return (
     <div
@@ -104,17 +110,18 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl }: Moo
               </>
             )}
           </div>
-          <div
-            style={{
-              font: `600 13px ${FONT_MONO}`,
-              letterSpacing: 3,
-              color: PAPER_DIM,
-              textTransform: 'uppercase',
-            }}
-          >
-            {d.audienceCert ? `${d.audienceCert}+ ALL AGES` : 'ALL AGES'}
-            {d.runtime ? `  ·  ${d.runtime}` : ''}
-          </div>
+          {d.runtime && (
+            <div
+              style={{
+                font: `600 13px ${FONT_MONO}`,
+                letterSpacing: 3,
+                color: PAPER_DIM,
+                textTransform: 'uppercase',
+              }}
+            >
+              {d.runtime}
+            </div>
+          )}
         </div>
 
         {/* Title block */}
@@ -172,21 +179,13 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl }: Moo
             borderBottom: `1px solid ${PAPER_DEEP}`,
           }}
         >
-          <MetaCell label="Théâtre" value={d.theater || '—'} sub={d.screen} />
-          <MetaCell
-            label="Séance"
-            value={compactDate(d.watchDate) || '—'}
-            sub={d.watchTime}
-            mono
-          />
-          {d.seat ? (
-            <MetaCell label="Place" value={d.seat} mono />
-          ) : (
-            <MetaCell label="Place" value="자유석" sub="OPEN SEATING" />
+          {d.theater && <MetaCell label="Théâtre" value={d.theater} sub={d.screen} />}
+          {watchDateClean && (
+            <MetaCell label="Séance" value={watchDateClean} sub={d.watchTime} mono />
           )}
-          {d.releaseDate && (
-            <MetaCell label="Sortie" value={compactDate(d.releaseDate)} mono />
-          )}
+          {d.seat && <MetaCell label="Place" value={d.seat} mono />}
+          {releaseClean && <MetaCell label="Sortie" value={releaseClean} mono />}
+          {reissueClean && <MetaCell label="Reprise" value={reissueClean} mono />}
           {d.actors && (
             <div style={{ gridColumn: '1 / -1', marginTop: 4 }}>
               <div
@@ -206,6 +205,10 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl }: Moo
                   fontFamily: FONT_KR,
                   letterSpacing: -0.2,
                   lineHeight: 1.3,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
                 }}
               >
                 {d.actors}
