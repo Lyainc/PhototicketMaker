@@ -1,11 +1,28 @@
+import { useEffect, useMemo } from 'react';
 import { SCREENING_FORMATS } from '@/utils/constants';
+import { allowedFormatsForChain } from '@/utils/chainFormatMap';
 
 interface FormatPickerProps {
   value: string;
   onChange: (value: string) => void;
+  chain: string;
 }
 
-export default function FormatPicker({ value, onChange }: FormatPickerProps) {
+export default function FormatPicker({ value, onChange, chain }: FormatPickerProps) {
+  const visibleFormats = useMemo(() => {
+    const allowed = allowedFormatsForChain(chain);
+    if (!allowed) return SCREENING_FORMATS;
+    return SCREENING_FORMATS.filter((f) => f.value === '' || allowed.includes(f.value));
+  }, [chain]);
+
+  // Self-correction: when chain changes and current value is incompatible, clear it.
+  useEffect(() => {
+    const allowed = allowedFormatsForChain(chain);
+    if (allowed && value && !allowed.includes(value)) {
+      onChange('');
+    }
+  }, [chain, value, onChange]);
+
   return (
     <div className="space-y-2.5">
       <div className="flex items-baseline justify-between">
@@ -16,13 +33,12 @@ export default function FormatPicker({ value, onChange }: FormatPickerProps) {
           {value || 'none'}
         </span>
       </div>
-      {/* Horizontal scroll on small screens; wrap on larger */}
       <div
-        className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0"
+        className="-mx-1 flex flex-wrap gap-2 px-1 pb-1"
         role="radiogroup"
         aria-label="Screening format"
       >
-        {SCREENING_FORMATS.map((fmt) => {
+        {visibleFormats.map((fmt) => {
           const active = value === fmt.value;
           return (
             <button

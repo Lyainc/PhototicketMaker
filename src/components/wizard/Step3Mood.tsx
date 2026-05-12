@@ -38,6 +38,7 @@ export default function Step3Mood({ photo }: Step3MoodProps) {
       <FormatPicker
         value={components.format}
         onChange={(format) => setComp({ format })}
+        chain={components.chain}
       />
 
       <TexturePicker
