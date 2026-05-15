@@ -34,25 +34,19 @@ export default function Home() {
   const debouncedMovieInfo = useDebounce(photo.state.movieInfo, 280);
   const debouncedComponents = useDebounce(photo.state.components, 280);
 
-  // Mount 후 theme 복원
+  // FOUC 스크립트(_document.tsx)가 이미 적용한 클래스를 신뢰
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('phototicket:theme');
-      if (stored === 'dark' || stored === 'light') {
-        setTheme(stored);
-      } else {
-        setTheme(
-          window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-        );
-      }
-    } catch {
-      // localStorage 접근 불가 시 기본값 유지
-    }
+    setTheme(document.documentElement.classList.contains('theme-dark') ? 'dark' : 'light');
   }, []);
 
-  // documentElement 토글 + localStorage 영속
+  // 사용자 토글 시 class + theme-color + localStorage 동기화
+  // 색상 값은 _document.tsx의 themeScript와 동일하게 유지할 것
   useEffect(() => {
-    document.documentElement.classList.toggle('theme-dark', theme === 'dark');
+    const isDark = theme === 'dark';
+    document.documentElement.classList.toggle('theme-dark', isDark);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', isDark ? '#0E1012' : '#F4F5F7');
     try {
       localStorage.setItem('phototicket:theme', theme);
     } catch {}

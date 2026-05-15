@@ -1,3 +1,4 @@
+import { useMatchMedia } from '@/hooks/useMatchMedia';
 import { Sprocket } from './Sprocket';
 
 type PreviewState = 'empty' | 'updating' | 'ready' | 'saving' | 'saved';
@@ -24,9 +25,9 @@ function CheckIcon() {
   );
 }
 
-function SpinnerIcon() {
+function SpinnerIcon({ spin }: { spin: boolean }) {
   return (
-    <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg className={spin ? 'animate-spin' : ''} width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
@@ -45,6 +46,7 @@ export function MobileDock({
   onCtaClick,
   onGoBack,
 }: MobileDockProps) {
+  const prefersReducedMotion = useMatchMedia('(prefers-reduced-motion: reduce)');
   const defaultLabel = phase === 1 ? '다음 →' : 'JPEG 다운로드';
   const label = ctaLabel ?? defaultLabel;
 
@@ -153,7 +155,7 @@ export function MobileDock({
           >
             {ctaState === 'loading' && (
               <>
-                <SpinnerIcon />
+                <SpinnerIcon spin={!prefersReducedMotion} />
                 <span>처리 중...</span>
               </>
             )}
