@@ -1,281 +1,131 @@
 # 포토티켓 디자인 시스템
 
-포토티켓 메이커의 시각적 디자인 가이드라인 및 구현 방향을 정의합니다.
+CGV Photoplay 프리미엄 티켓을 모방한 4-mood 카탈로그 + 자산 자동 동기화 기반 렌더링 시스템이에요. 렌더는 React DOM(JSX/CSS)로 그리고 `html-to-image`로 캡처해요. (Canvas API는 v1에서 폐기.)
 
 ---
 
-## 🎨 디자인 철학
+## 🎨 4-mood 시스템
 
-**"포스터 위에 조화롭게 어울리는 요소들"**
+| Mood       | 비율             | 자연 픽셀 사이즈 | 특징                                       |
+|------------|------------------|------------------|--------------------------------------------|
+| MINIMAL    | 0.65 : 1 (세로)  | 960 × 1477       | 미니멀 시네마틱. 깔끔한 타이포 + 미세한 메타 |
+| CRITERION  | 0.65 : 1 (세로)  | 960 × 1477       | 크라이테리언 임프린트. 세리프 + 좌측 사이드바 |
+| 35MM       | 0.65 : 1 (세로)  | 960 × 1477       | 35mm 필름 모티프. 위/아래 sprocket + 프레임 카운터 |
+| EDITORIAL  | 1.54 : 1 (가로)  | 1477 × 960       | 에디토리얼 스텁. 프랑스어 라벨 + 좌측 포스터 |
 
-- ❌ **기존**: 하단에 반투명 박스 + 텍스트 (밋밋함)
-- ✅ **신규**: 포스터와 자연스럽게 어울리는 다층 레이어 구조
-
----
-
-## 📚 참고 디자인
-
-### 메가박스 오리지널 티켓
-- 영화별 독창적 디자인
-- 포스터 전면 활용 + 특수 후가공
-- 영화 테마를 반영한 시각적 요소
-
-### CGV That's The Ticket
-- **앞면**: 포스터 + 제목 로고 (후가공)
-- **뒷면**: 영화 정보 + 상징적 디자인
-- 세로 긴 독특한 비율 (7cm × 17cm)
-- 특수 용지 사용
-
-**Sources:**
-- [메가박스 오리지널 티켓 - 나무위키](https://namu.wiki/w/오리지널%20티켓)
-- [CGV That's The Ticket - 나무위키](https://namu.wiki/w/That's%20The%20Ticket)
-- [CGV 시그니처 티켓 굿즈 TTT 론칭](https://cjnews.cj.net/cgv-신규-영화-굿즈-thats-the-ticket-론칭)
+- 카탈로그: `src/utils/layouts.ts` (`LAYOUTS` array + `LayoutId` 유니온)
+- 무드 컴포넌트: `src/components/moods/Mood{Minimal,Criterion,35mm,Editorial}.tsx`
+- 공통 primitive: `src/components/moods/_shared.tsx` — `ChainStamp`, `FormatStamp`, `Barcode`, `Poster`, `HorizontalSprockets`, `PerforationStrip` 등
+- 렌더러: `src/components/TicketRenderer.tsx` — active mood로 dispatch + ResizeObserver로 자연 픽셀 트리를 preview 영역에 맞게 스케일
 
 ---
 
-## 🎯 신규 디자인 컨셉
+## 🧩 자산 자동 동기화
 
-### 핵심 원칙
-1. **포스터 중심**: 이미지를 가리지 않고 강조
-2. **시인성 확보**: 이미지 필터 + 텍스트 그림자/아웃라인
-3. **레이어 구조**: 다양한 요소가 층층이 쌓이는 느낌
-4. **미니멀리즘**: 불필요한 박스 제거, 깔끔한 배치
-
-### 제거할 요소
-- ❌ 하단 반투명 검은색 박스 (overlay)
-- ❌ 딱딱한 직사각형 배경
-
-### 추가할 요소
-- ✅ 이미지 필터 (그라디언트, 비네팅)
-- ✅ 텍스트 아웃라인/그림자 (시인성)
-- ✅ 실제 로고 에셋 사용
-- ✅ 그리드/라인 요소 (선택)
-- ✅ 배지/스티커 느낌의 포맷 아이콘
-
----
-
-## 🖼️ 레이아웃 구조
-
-### 레이어 순서 (아래 → 위)
+극장 체인 로고와 상영 포맷 로고는 **폴더의 파일명**이 진실의 원천. 자세한 규약과 워크플로는 [`ASSETS.md`](./ASSETS.md) 참고. 요약하면:
 
 ```
-Layer 1: 배경 포스터 이미지 (960×1477px)
-    ↓
-Layer 2: 이미지 필터/오버레이
-    - 그라디언트 (상단 어둡게, 하단 밝게)
-    - 비네팅 (가장자리 어둡게)
-    ↓
-Layer 3: 극장 체인 로고 (상단 좌측)
-    - 실제 PNG/SVG 에셋
-    - 흰색 또는 검은색 버전
-    ↓
-Layer 4: 상영 포맷 아이콘 (상단 우측 또는 좌측 하단)
-    - 배지 스타일
-    - 흰색 배경 + 검은색 로고 또는 반대
-    ↓
-Layer 5: 영화 제목 (중앙 또는 하단)
-    - 웹폰트 (Pretendard Bold)
-    - 텍스트 아웃라인 또는 그림자
-    ↓
-Layer 6: 관람 정보 (하단)
-    - 날짜, 극장, 좌석
-    - 작은 폰트, 그림자 처리
+public/assets/{chains,formats}_transparent/<value>_<label>.png
+   ↓  (bun scripts/generate-asset-manifest.ts — predev/prebuild hook)
+src/utils/assets.generated.ts
+   ↓
+THEATER_CHAINS / SCREENING_FORMATS  ←  constants.ts (NONE 항목만 prepend)
+   ↓
+TheaterChainPicker / FormatPicker / ChainStamp / FormatStamp
 ```
 
+`ChainStamp` / `FormatStamp`은 entry lookup miss 또는 `file`이 비어있을 때 **null을 렌더**해요. raw value가 티켓에 새어 나가지 않도록 안전망.
+
 ---
 
-## 🎨 색상 시스템
+## ✂️ 캡처 파이프라인 (export)
 
-### 배경 필터
-```css
-/* 그라디언트 오버레이 (상단 어둡게) */
-linear-gradient(
-  to bottom,
-  rgba(0, 0, 0, 0.5) 0%,
-  rgba(0, 0, 0, 0) 30%,
-  rgba(0, 0, 0, 0) 70%,
-  rgba(0, 0, 0, 0.3) 100%
-)
+`src/utils/captureToImage.ts`:
+1. `document.fonts.ready` + 모든 image `complete` 대기
+2. `html-to-image` 동적 import
+3. **`transform: 'none'`을 캡처 시점에 강제** — preview 스케일 wrapper가 결과를 왜곡하지 않도록
+4. JPEG data URL 출력, `pixelRatio: 2`로 자연 픽셀의 2배 해상도
+5. anchor element click으로 다운로드 (자동 GC, blob URL revoke 불필요)
 
-/* 비네팅 효과 */
-radial-gradient(
-  ellipse at center,
-  rgba(0, 0, 0, 0) 0%,
-  rgba(0, 0, 0, 0.4) 100%
-)
+캡처 호환성을 위해 `<img>` 태그는 **`crossOrigin="anonymous"`**를 일관 적용해요. 같은 origin이라도 명시해두면 caching/CORS 미스로 인한 taint canvas 이슈를 회피할 수 있어요.
+
+---
+
+## 🚫 React inline style 컨벤션
+
+**`font` shorthand 금지.** 같은 객체에 `lineHeight`를 따로 지정할 때 React가 rerender마다 "Removing font lineHeight" 경고를 띄우고, 캡처 시점에 lineHeight가 reset될 수 있어요.
+
+```tsx
+// ❌ NO
+style={{ font: `800 22px ${FONT_KR}`, lineHeight: 1.3 }}
+
+// ✅ YES
+style={{
+  fontWeight: 800,
+  fontSize: 22,
+  fontFamily: FONT_KR,
+  lineHeight: 1.3,
+}}
 ```
 
-### 텍스트 색상
-- **영화 제목**: `#FFFFFF` (흰색) + 그림자
-- **관람 정보**: `#EEEEEE` (밝은 회색)
-- **날짜**: `#CCCCCC` (중간 회색)
+`fontStyle` (`italic`)도 같이 분해. 만약 inline style에 `lineHeight` 자체를 안 쓰는 경우는 무해하지만, 일관성 위해 모든 신규 코드는 분해 형태로.
 
-### 텍스트 효과
-```css
-/* 텍스트 그림자 (시인성) */
-text-shadow:
-  2px 2px 4px rgba(0, 0, 0, 0.8),
-  -1px -1px 2px rgba(0, 0, 0, 0.5);
+---
 
-/* 또는 텍스트 아웃라인 */
-stroke: 2px solid rgba(0, 0, 0, 0.8);
+## 🎯 디자인 철학
+
+1. **포스터 중심** — 이미지를 가리는 대신 강조. 박스/오버레이는 최소화.
+2. **시인성 확보** — 텍스트 그림자/아웃라인 + posterOpacity slider로 사용자가 직접 조정.
+3. **레이어 구조** — 포스터 → 텍스처 오버레이(스코딕스/메탈/홀로그램 등) → 메타 → 로고 stamp.
+4. **자연 픽셀 + 스케일 분리** — 무드 컴포넌트는 layout의 natural pixel(예 960×1477)을 그대로 렌더, preview는 ResizeObserver로 css transform scale만 적용. 캡처는 항상 natural pixel.
+
+---
+
+## 🖌️ 폰트 토큰 (`_shared.tsx`)
+
+```ts
+FONT_MONO   = "JetBrains Mono", "SF Mono", ui-monospace, monospace
+FONT_SANS   = "Inter", "Pretendard Variable", "Pretendard", "Noto Sans KR", sans-serif
+FONT_SERIF  = "Cormorant Garamond", "Times New Roman", serif
+FONT_KR     = "Pretendard Variable", "Noto Sans KR", "Inter", sans-serif
 ```
 
----
-
-## 📏 레이아웃 가이드
-
-### 위치 좌표 (960×1477px 기준)
-
-```typescript
-export const DESIGN_LAYOUT = {
-  // 극장 체인 로고 (상단 좌측)
-  chainLogo: {
-    x: 40,
-    y: 50,
-    maxWidth: 140,
-    maxHeight: 50,
-  },
-
-  // 상영 포맷 배지 (상단 우측 또는 중단 좌측)
-  formatBadge: {
-    x: 40,
-    y: 700, // 중단 좌측
-    maxWidth: 120,
-    maxHeight: 40,
-    padding: 10,
-    borderRadius: 8,
-    background: 'rgba(255, 255, 255, 0.9)',
-  },
-
-  // 영화 제목 (하단 또는 중앙)
-  movieTitle: {
-    x: 40,
-    y: 1250,
-    maxWidth: 880, // padding 고려
-    fontSize: 56, // 키움
-    lineHeight: 1.2,
-    textAlign: 'left',
-  },
-
-  // 관람일 (하단)
-  watchDate: {
-    x: 40,
-    y: 1350,
-    fontSize: 28,
-  },
-
-  // 극장 위치 (하단)
-  theater: {
-    x: 40,
-    y: 1400,
-    fontSize: 22,
-  },
-
-  // 여백
-  padding: {
-    side: 40,
-    top: 50,
-    bottom: 50,
-  },
-};
-```
+mood 컴포넌트와 stamp에서 이 토큰을 import해서 사용.
 
 ---
 
-## 🖌️ 타이포그래피
+## 🎨 후가공 텍스처
 
-### 폰트 패밀리
-- **Primary**: Pretendard (한글)
-- **Fallback**: Arial, sans-serif
+`TextureOverlay`(`_shared.tsx`)가 `components.texture`에 따라 포스터 위에 추가 레이어를 얹어요.
 
-### 폰트 크기
-| 요소 | 크기 | 굵기 |
-|------|------|------|
-| 영화 제목 | 56px | Bold (700) |
-| 극장 체인 | 로고 (이미지) | - |
-| 상영 포맷 | 로고 (이미지) | - |
-| 관람일 | 28px | Medium (500) |
-| 극장 위치 | 22px | Regular (400) |
+| Texture     | 효과                                       | mix-blend-mode                |
+|-------------|--------------------------------------------|-------------------------------|
+| `original`  | 무가공 (원본 그대로)                       | —                             |
+| `none`      | 일반 인화지 (유광 grain)                   | screen                        |
+| `hologram`  | 무지개빛 반사                              | color-dodge                   |
+| `metal`     | 차가운 금속 질감                           | hard-light                    |
+| `artpaper`  | 캔버스/수채화 결                           | multiply                      |
+| `vintage`   | 빛바랜 sepia (CSS filter)                  | — (필터만)                    |
+| `newspaper` | 거친 망점/흑백 (CSS filter)                | — (필터만)                    |
+| `scodix`    | 부분 코팅/엠보싱 광택                      | overlay                       |
 
----
-
-## 🎭 에셋 처리 방식
-
-### 색상 통일 원칙
-- 모든 로고/아이콘은 **흰색** 또는 **검은색** 단색으로 통일
-- 배경과 대비되는 색상 선택:
-  - **밝은 배경** → 검은색 로고
-  - **어두운 배경** → 흰색 로고
-
-### 에셋 크기 조정
-| 에셋 | 권장 크기 | 최대 크기 |
-|------|----------|----------|
-| 극장 체인 로고 | 140×50px | 200×70px |
-| 상영 포맷 아이콘 | 100×35px | 150×50px |
-
-### 파일 형식 우선순위
-1. **SVG** (가장 선호) - 확대/축소 시 깨지지 않음
-2. **PNG** (투명 배경) - 고해상도 (@2x)
-3. **WebP** - 파일 크기 작음
-
----
-
-## 🚀 구현 완료 내역 (Phase 1.5 ~ 3)
-
-### Phase 1.5: 렌더링 성능 최적화
-- **Blob 활용**: `URL.createObjectURL` 적용으로 Base64 변환 생략, 메모리 안정성 향상
-- **디바운싱**: 입력 폼 조작 시 300ms 딜레이를 두어 불필요한 Canvas 리렌더링 방지
-
-### Phase 2: 레이아웃 & 텍스트 고도화
-- **Pretendard CDN**: `next/font/local` 대신 CDN과 Tailwind CSS를 이용해 웹폰트 적용
-- **자동 콘트라스트 (`getContrastColor`)**: 포스터 하단 400px 영역의 밝기(Brightness)를 분석하여 텍스트 및 효과 색상을 Black/White로 자동 전환
-- **멀티 라인 줄바꿈**: 단어 단위 우선, 이후 문자 단위로 줄바꿈을 지원하는 커스텀 `wrapText` 함수 적용
-
-### Phase 3: 프리미엄 에셋 통합 & 특수 효과
-- **TCG 스타일 프레임 (`drawTCGBorder`)**: 둥근 모서리와 두께를 갖춘 이너 라인과 글로우(Shadow) 효과 적용
-- **특수 후가공 텍스처 (`applyTextureOverlay`)**:
-  - `Hologram`: 무지개빛 그라디언트 + `color-dodge` 블렌딩
-  - `Metal`: 차가운 대각선 빛 반사 + `hard-light`
-  - `Artpaper`: 수채화/캔버스 종이 질감 + `multiply`
-  - `Scodix`: 부분 엠보싱/코팅 광택 + `overlay`
-  - `Vintage` / `Newspaper`: Canvas Filter 적용
-- **미학적 장식**: 메가박스 스타일의 별점(`drawStars`), 티켓 바코드(`drawBarcode`), 메타데이터 구분선(`Divider`) 추가
-
----
-
-## 🎨 디자인 변형 (선택 사항)
-
-### 옵션 A: 미니멀
-- 최소한의 요소만 표시
-- 텍스트 위주, 로고는 작게
-- 깔끔하고 모던
-
-### 옵션 B: 맥시멀
-- 모든 정보 표시
-- 장식 요소 추가 (그리드, 라인)
-- 풍부한 레이어
-
-### 옵션 C: 극장별 테마
-- CGV: 빨간색 액센트
-- 메가박스: 보라색 액센트
-- 롯데시네마: 붉은색 액센트
+`posterOpacity` slider(`components.posterOpacity`, 0-1)는 텍스처 위 검은 막을 통해 포스터 밝기를 조정. 캡처에도 그대로 반영.
 
 ---
 
 ## 📝 테스트 체크리스트
 
-디자인 적용 후 다양한 이미지로 테스트:
+새 mood / 새 자산을 적용한 후 다양한 포스터로 검증:
 
-- [ ] 밝은 포스터 (흰색 배경)
-- [ ] 어두운 포스터 (검은색 배경)
-- [ ] 다채로운 포스터 (화려한 색상)
-- [ ] 단색 포스터 (심플한 디자인)
-- [ ] 인물 중심 포스터
-- [ ] 풍경 중심 포스터
+- [ ] 밝은 포스터 (흰색 배경) — 검은 ink 자동 선택 잘 되는지 (`isInkLight` helper)
+- [ ] 어두운 포스터 (검은 배경) — 흰 ink + 충분한 contrast
+- [ ] 다채로운 포스터 — 추출된 추천 색상이 가독성 해치지 않는지
+- [ ] 가로/세로 포스터 모두 — 0.65:1 크롭으로 손실 없는지
+- [ ] EDITORIAL 가로 (1477×960) — 좌측 포스터 + 우측 메타 균형
+- [ ] 캡처 결과 픽셀 사이즈가 layout natural size × 2인지 (`pixelRatio: 2`)
 
-모든 경우에 텍스트가 읽히고 로고가 잘 보여야 합니다!
+모든 경우에 텍스트 가독 + 로고 stamp + 텍스처 적용 + 다운로드 JPEG 생성까지 정상 동작해야 해요.
 
 ---
 
-**마지막 업데이트**: 2024.12.02
+**마지막 업데이트**: 2026-05-11

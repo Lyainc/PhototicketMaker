@@ -8,11 +8,11 @@ import {
   FormatStamp,
   MoodProps,
   Poster,
-  compactDate,
   isInkLight,
   pickTitleSize,
   resolveBookingNo,
 } from './_shared';
+import { formatDate } from '@/utils/dateFormat';
 
 const metaLabelStyle = (ink: string): CSSProperties => ({
   font: `700 13px ${FONT_MONO}`,
@@ -24,7 +24,9 @@ const metaLabelStyle = (ink: string): CSSProperties => ({
 });
 
 const metaValueStyle = (ink: string): CSSProperties => ({
-  font: `700 22px ${FONT_SANS}`,
+  fontWeight: 700,
+  fontSize: 22,
+  fontFamily: FONT_SANS,
   letterSpacing: -0.2,
   color: ink,
   lineHeight: 1.25,
@@ -43,7 +45,12 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
   const topPanelBg = isLight ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.55)';
 
   const bookingNo = resolveBookingNo(d);
-  const watchDateClean = compactDate(d.watchDate);
+  const watchToken = d.watchDateFormat || 'kr-compact';
+  const releaseToken = d.releaseDateFormat || 'kr-compact';
+  const releaseGran = d.releaseDateGranularity || 'date';
+  const watchDateClean = formatDate(d.watchDate, watchToken, 'date');
+  const releaseClean = formatDate(d.releaseDate, releaseToken, releaseGran);
+  const reissueClean = d.isReissue ? formatDate(d.reissueDate, releaseToken, releaseGran) : '';
 
   return (
     <div
@@ -78,22 +85,24 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
         }}
       >
         <ChainStamp chain={components.chain} size={1.25} />
-        <div
-          style={{
-            font: `700 22px ${FONT_MONO}`,
-            letterSpacing: 2.5,
-            color: ink,
-            textAlign: 'right',
-          }}
-        >
-          {watchDateClean}
-          {d.watchTime && (
-            <>
-              <br />
-              <span style={{ opacity: 0.6, fontSize: 18 }}>{d.watchTime}</span>
-            </>
-          )}
-        </div>
+        {(watchDateClean || d.watchTime) && (
+          <div
+            style={{
+              font: `700 22px ${FONT_MONO}`,
+              letterSpacing: 2.5,
+              color: ink,
+              textAlign: 'right',
+            }}
+          >
+            {watchDateClean}
+            {d.watchTime && (
+              <>
+                {watchDateClean && <br />}
+                <span style={{ opacity: 0.6, fontSize: 18 }}>{d.watchTime}</span>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Bottom scrim */}
@@ -128,7 +137,9 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
         {d.title && (
           <div
             style={{
-              font: `${titleLen > 12 ? 400 : 300} ${titleSize}px ${FONT_KR}`,
+              fontWeight: titleLen > 12 ? 400 : 300,
+              fontSize: titleSize,
+              fontFamily: FONT_KR,
               lineHeight: 1.05,
               letterSpacing: -1.5,
               marginBottom: 36,
@@ -143,11 +154,17 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
         {d.actors && (
           <div
             style={{
-              font: `500 22px ${FONT_KR}`,
+              fontWeight: 500,
+              fontSize: 22,
+              fontFamily: FONT_KR,
               opacity: 0.78,
               marginBottom: 16,
               letterSpacing: 0.2,
               lineHeight: 1.35,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}
           >
             <span
@@ -165,7 +182,7 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
           </div>
         )}
 
-        {d.releaseDate && (
+        {releaseClean && (
           <div
             style={{
               font: `600 16px ${FONT_MONO}`,
@@ -174,7 +191,8 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
               marginBottom: 30,
             }}
           >
-            RELEASED · {d.releaseDate}
+            RELEASED · {releaseClean}
+            {reissueClean && <>{'  ·  '}RE-RELEASED · {reissueClean}</>}
           </div>
         )}
 
@@ -197,16 +215,25 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
               alignItems: 'baseline',
             }}
           >
-            <div style={metaLabelStyle(ink)}>관람일</div>
-            <div style={metaValueStyle(ink)}>
-              {watchDateClean}{' '}
-              {d.watchTime && <span style={{ opacity: 0.6 }}>{d.watchTime}</span>}
-            </div>
-            <div style={metaLabelStyle(ink)}>상영관</div>
-            <div style={metaValueStyle(ink)}>
-              {d.theater}
-              {d.screen ? ` · ${d.screen}` : ''}
-            </div>
+            {(watchDateClean || d.watchTime) && (
+              <>
+                <div style={metaLabelStyle(ink)}>관람일</div>
+                <div style={metaValueStyle(ink)}>
+                  {watchDateClean}
+                  {watchDateClean && d.watchTime && ' '}
+                  {d.watchTime && <span style={{ opacity: 0.6 }}>{d.watchTime}</span>}
+                </div>
+              </>
+            )}
+            {(d.theater || d.screen) && (
+              <>
+                <div style={metaLabelStyle(ink)}>상영관</div>
+                <div style={metaValueStyle(ink)}>
+                  {d.theater}
+                  {d.theater && d.screen ? ` · ${d.screen}` : d.screen || ''}
+                </div>
+              </>
+            )}
 
             {d.seat && (
               <>
@@ -217,10 +244,7 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
             {d.runtime && (
               <>
                 <div style={metaLabelStyle(ink)}>러닝타임</div>
-                <div style={metaValueStyle(ink)}>
-                  {d.runtime}
-                  {d.audienceCert ? `  ·  ${d.audienceCert}+` : ''}
-                </div>
+                <div style={metaValueStyle(ink)}>{d.runtime}</div>
               </>
             )}
 
@@ -242,7 +266,7 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
               gap: 14,
             }}
           >
-            {components.format && <FormatStamp format={components.format} color={ink} size={0.9} />}
+            {components.format && <FormatStamp format={components.format} size={0.9} />}
             <Barcode value={bookingNo} color={ink} width={180} height={34} textSize={10} />
           </div>
         </div>

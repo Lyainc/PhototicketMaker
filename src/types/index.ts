@@ -1,19 +1,29 @@
 export type LayoutId = 'minimal' | 'criterion' | '35mm' | 'editorial';
 
+export type DateFormatToken = 'iso' | 'kr-compact' | 'cinema-mono' | 'en-long';
+export type DateGranularity = 'year' | 'year-month' | 'date';
+
 export interface MovieInfo {
   title: string;
-  titleOg?: string;
-  actors?: string;
+  titleOg: string;
+  /** Variable-length ISO: '1994' | '1994-11' | '1994-11-06'. Required (≥ year). */
   releaseDate?: string;
-  watchDate: string;
+  releaseDateGranularity?: DateGranularity;
+  releaseDateFormat?: DateFormatToken;
+  /** Re-release date — same variable-length ISO. */
+  reissueDate?: string;
+  isReissue?: boolean;
+  /** ISO 'YYYY-MM-DD'. Optional. */
+  watchDate?: string;
+  watchDateFormat?: DateFormatToken;
   watchTime?: string;
-  theater: string;
+  theater?: string;
   screen?: string;
   seat?: string;
+  actors?: string;
   rating: number;
   showRating: boolean;
   runtime?: string;
-  audienceCert?: string;
   bookingNumber?: string;
 }
 

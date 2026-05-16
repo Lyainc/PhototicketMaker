@@ -9,10 +9,10 @@ import {
   HorizontalSprockets,
   MoodProps,
   Poster,
-  compactDate,
   pickTitleSize,
   resolveBookingNo,
 } from './_shared';
+import { formatDate } from '@/utils/dateFormat';
 
 const FS_BASE = '#0a0a0a';
 const FS_HOLE = '#f6f1e4';
@@ -44,6 +44,14 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
     'linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.55) 18%, rgba(10,10,10,0.92) 60%, rgba(10,10,10,0.98) 100%)';
 
   const bookingNo = resolveBookingNo(d);
+  const watchToken = d.watchDateFormat || 'kr-compact';
+  const releaseToken = d.releaseDateFormat || 'kr-compact';
+  const releaseGran = d.releaseDateGranularity || 'date';
+  const watchDateClean = formatDate(d.watchDate, watchToken, 'date');
+  const releaseClean = formatDate(d.releaseDate, releaseToken, releaseGran);
+  const reissueClean = d.isReissue ? formatDate(d.reissueDate, releaseToken, releaseGran) : '';
+  const exhibitedText = [d.theater, d.screen, d.seat].filter(Boolean).join(' · ');
+  const screenedText = [watchDateClean, d.watchTime].filter(Boolean).join(' · ');
 
   return (
     <div
@@ -117,7 +125,7 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
             transform: 'rotate(-3deg)',
           }}
         >
-          <FormatStamp format={components.format} color={FS_INK} size={1.1} framed surface="dark" />
+          <FormatStamp format={components.format} size={0.8} surface="dark" />
         </div>
       )}
 
@@ -156,7 +164,9 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
           {d.title && (
             <div
               style={{
-                font: `800 ${titleSize}px ${FONT_KR}`,
+                fontWeight: 800,
+                fontSize: titleSize,
+                fontFamily: FONT_KR,
                 lineHeight: 1.0,
                 letterSpacing: -0.5,
                 marginBottom: 18,
@@ -177,26 +187,33 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
               marginBottom: 14,
             }}
           >
-            <span style={cellLabelStyle}>EXHIBITED</span>
-            <span style={cellValueSans}>
-              {d.theater}
-              {d.screen ? ` · ${d.screen}` : ''}
-              {d.seat ? ` · ${d.seat}` : ''}
-            </span>
-            <span style={cellLabelStyle}>SCREENED</span>
-            <span style={cellValueMono}>
-              {compactDate(d.watchDate)}
-              {d.watchTime ? ` · ${d.watchTime}` : ''}
-            </span>
+            {exhibitedText && (
+              <>
+                <span style={cellLabelStyle}>EXHIBITED</span>
+                <span style={cellValueSans}>{exhibitedText}</span>
+              </>
+            )}
+            {screenedText && (
+              <>
+                <span style={cellLabelStyle}>SCREENED</span>
+                <span style={cellValueMono}>{screenedText}</span>
+              </>
+            )}
             {d.actors && (
               <>
                 <span style={cellLabelStyle}>STARRING</span>
                 <span
                   style={{
                     color: FS_INK,
-                    font: `500 16px ${FONT_KR}`,
+                    fontWeight: 500,
+                    fontSize: 16,
+                    fontFamily: FONT_KR,
                     letterSpacing: -0.1,
                     lineHeight: 1.3,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
                   }}
                 >
                   {d.actors}
@@ -206,10 +223,7 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
             {d.runtime && (
               <>
                 <span style={cellLabelStyle}>RUNTIME</span>
-                <span style={cellValueMono}>
-                  {d.runtime}
-                  {d.audienceCert ? `  ·  ${d.audienceCert}+` : ''}
-                </span>
+                <span style={cellValueMono}>{d.runtime}</span>
               </>
             )}
             {d.showRating && d.rating > 0 && (
@@ -244,8 +258,13 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
                 letterSpacing: 2.5,
               }}
             >
-              ← EXP {compactDate(d.watchDate)}
-              {d.releaseDate ? ` · REL ${compactDate(d.releaseDate)}` : ''}
+              {[
+                watchDateClean && `← EXP ${watchDateClean}`,
+                releaseClean && `REL ${releaseClean}`,
+                reissueClean && `RE-REL ${reissueClean}`,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </div>
             <Barcode value={bookingNo} color={FS_INK} width={180} height={28} textSize={10} />
           </div>
