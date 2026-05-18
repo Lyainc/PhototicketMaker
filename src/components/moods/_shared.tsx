@@ -514,7 +514,7 @@ export function resolveBookingNo(d: MovieInfo): string {
 
 export function resolveSerialNo(d: MovieInfo): string {
   if (d.serialNo) return d.serialNo;
-  const seed = (d.title || 'phototicket') + (d.bookingNumber || '');
+  const seed = 'serial::' + (d.title || 'phototicket') + (d.bookingNumber || '');
   return String(seedFromString(seed) % 10000).padStart(4, '0');
 }
 
