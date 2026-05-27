@@ -116,7 +116,9 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl }: Moo
           {d.runtime && (
             <div
               style={{
-                font: `600 13px ${FONT_MONO}`,
+                fontWeight: 600,
+                fontSize: 13,
+                fontFamily: FONT_MONO,
                 letterSpacing: 3,
                 color: PAPER_DIM,
                 textTransform: 'uppercase',
@@ -243,7 +245,9 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl }: Moo
             </div>
             <div
               style={{
-                font: `700 22px ${FONT_MONO}`,
+                fontWeight: 700,
+                fontSize: 22,
+                fontFamily: FONT_MONO,
                 letterSpacing: 1,
                 color: PAPER_DEEP,
               }}
@@ -283,7 +287,9 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl }: Moo
               position: 'absolute',
               right: 52,
               top: 44,
-              font: `800 16px ${FONT_MONO}`,
+              fontWeight: 800,
+              fontSize: 16,
+              fontFamily: FONT_MONO,
               letterSpacing: 1,
               color: accent,
             }}
@@ -335,7 +341,9 @@ function MetaCell({
         <div
           style={{
             marginTop: 4,
-            font: `600 16px ${FONT_MONO}`,
+            fontWeight: 600,
+            fontSize: 16,
+            fontFamily: FONT_MONO,
             letterSpacing: 1.5,
             color: PAPER_DIM,
           }}

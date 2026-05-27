@@ -83,7 +83,9 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl }: Moo
       >
         <div
           style={{
-            font: `800 16px ${FONT_MONO}`,
+            fontWeight: 800,
+            fontSize: 16,
+            fontFamily: FONT_MONO,
             letterSpacing: 3,
             writingMode: 'vertical-rl',
             transform: 'rotate(180deg)',
@@ -104,7 +106,9 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl }: Moo
         {watchYear && (
           <div
             style={{
-              font: `900 22px ${FONT_SANS}`,
+              fontWeight: 900,
+              fontSize: 22,
+              fontFamily: FONT_SANS,
               letterSpacing: 3,
               writingMode: 'vertical-rl',
             }}
@@ -142,7 +146,9 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl }: Moo
           position: 'absolute',
           left: 116,
           top: 56,
-          font: `700 15px ${FONT_MONO}`,
+          fontWeight: 700,
+          fontSize: 15,
+          fontFamily: FONT_MONO,
           letterSpacing: 3,
           opacity: 0.85,
         }}
@@ -218,7 +224,9 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl }: Moo
         {d.showRating && d.rating > 0 && (
           <div
             style={{
-              font: `800 22px ${FONT_MONO}`,
+              fontWeight: 800,
+              fontSize: 22,
+              fontFamily: FONT_MONO,
               letterSpacing: 2.5,
               marginBottom: 18,
             }}
@@ -297,7 +305,9 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl }: Moo
           />
           <text
             style={{
-              font: `700 9px ${FONT_MONO}`,
+              fontWeight: 700,
+              fontSize: 9,
+              fontFamily: FONT_MONO,
               letterSpacing: 4,
               fill: ink,
               opacity: 0.85,
@@ -322,7 +332,9 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl }: Moo
         >
           <div
             style={{
-              font: `600 9px ${FONT_MONO}`,
+              fontWeight: 600,
+              fontSize: 9,
+              fontFamily: FONT_MONO,
               letterSpacing: 2,
               opacity: 0.7,
             }}
