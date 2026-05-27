@@ -17,7 +17,9 @@ import {
 import { formatDate } from '@/utils/dateFormat';
 
 const metaLabelStyle = (ink: string): CSSProperties => ({
-  font: `700 13px ${FONT_MONO}`,
+  fontWeight: 700,
+  fontSize: 13,
+  fontFamily: FONT_MONO,
   letterSpacing: 2.8,
   textTransform: 'uppercase',
   color: ink,
@@ -91,7 +93,9 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
         {(watchDateClean || d.watchTime) && (
           <div
             style={{
-              font: `700 22px ${FONT_MONO}`,
+              fontWeight: 700,
+              fontSize: 22,
+              fontFamily: FONT_MONO,
               letterSpacing: 2.5,
               color: ink,
               textAlign: 'right',
@@ -126,7 +130,9 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
         {d.titleOg && (
           <div
             style={{
-              font: `700 24px ${FONT_SANS}`,
+              fontWeight: 700,
+              fontSize: 24,
+              fontFamily: FONT_SANS,
               letterSpacing: 4,
               textTransform: 'uppercase',
               opacity: 0.78,
@@ -172,7 +178,9 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
           >
             <span
               style={{
-                font: `700 14px ${FONT_SANS}`,
+                fontWeight: 700,
+                fontSize: 14,
+                fontFamily: FONT_SANS,
                 letterSpacing: 2.5,
                 opacity: 0.55,
                 marginRight: 12,
@@ -188,7 +196,9 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
         {releaseClean && (
           <div
             style={{
-              font: `600 16px ${FONT_MONO}`,
+              fontWeight: 600,
+              fontSize: 16,
+              fontFamily: FONT_MONO,
               letterSpacing: 2,
               opacity: 0.55,
               marginBottom: 30,

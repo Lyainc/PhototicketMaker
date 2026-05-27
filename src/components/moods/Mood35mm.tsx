@@ -24,18 +24,24 @@ const FS_DIVIDER = 'rgba(244,237,224,0.32)';
 
 const cellLabelStyle: CSSProperties = {
   color: FS_DIM,
-  font: `700 11px ${FONT_MONO}`,
+  fontWeight: 700,
+  fontSize: 11,
+  fontFamily: FONT_MONO,
   letterSpacing: 2.5,
   textTransform: 'uppercase',
 };
 const cellValueSans: CSSProperties = {
   color: FS_INK,
-  font: `700 17px ${FONT_SANS}`,
+  fontWeight: 700,
+  fontSize: 17,
+  fontFamily: FONT_SANS,
   letterSpacing: -0.2,
 };
 const cellValueMono: CSSProperties = {
   color: FS_INK,
-  font: `700 17px ${FONT_MONO}`,
+  fontWeight: 700,
+  fontSize: 17,
+  fontFamily: FONT_MONO,
   letterSpacing: 0.5,
 };
 
@@ -93,7 +99,9 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
-          font: `700 14px ${FONT_MONO}`,
+          fontWeight: 700,
+          fontSize: 14,
+          fontFamily: FONT_MONO,
           letterSpacing: 2.8,
           color: FS_DIM,
           borderBottom: `1px dashed ${FS_DIVIDER}`,
@@ -154,7 +162,9 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
           {d.titleOg && (
             <div
               style={{
-                font: `700 14px ${FONT_MONO}`,
+                fontWeight: 700,
+                fontSize: 14,
+                fontFamily: FONT_MONO,
                 letterSpacing: 3.5,
                 textTransform: 'uppercase',
                 color: FS_DIM,
@@ -235,7 +245,9 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
                 <span
                   style={{
                     color: FS_INK,
-                    font: `800 17px ${FONT_SANS}`,
+                    fontWeight: 800,
+                    fontSize: 17,
+                    fontFamily: FONT_SANS,
                     gridColumn: 'span 3',
                   }}
                 >
@@ -266,7 +278,9 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
           >
             <div
               style={{
-                font: `700 12px ${FONT_MONO}`,
+                fontWeight: 700,
+                fontSize: 12,
+                fontFamily: FONT_MONO,
                 color: FS_INK,
                 letterSpacing: 2.5,
               }}

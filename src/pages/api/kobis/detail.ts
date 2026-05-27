@@ -19,7 +19,7 @@ export default async function handler(
     return res.status(500).json({ error: 'KOBIS API Key is not configured' });
   }
 
-  const url = `http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json?key=${apiKey}&movieCd=${movieCd}`;
+  const url = `https://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json?key=${apiKey}&movieCd=${movieCd}`;
 
   try {
     const response = await fetch(url);
