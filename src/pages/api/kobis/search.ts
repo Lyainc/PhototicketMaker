@@ -20,7 +20,7 @@ export default async function handler(
   }
 
   const query = encodeURIComponent(movieNm);
-  const url = `http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieList.json?key=${apiKey}&movieNm=${query}`;
+  const url = `https://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieList.json?key=${apiKey}&movieNm=${query}`;
 
   try {
     const response = await fetch(url);
