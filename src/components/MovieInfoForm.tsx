@@ -149,6 +149,8 @@ export default function MovieInfoForm({
               }
             }}
             placeholder="인터스텔라"
+            aria-invalid={!!searchError || undefined}
+            aria-describedby={searchError ? 'movieTitle-error' : undefined}
             className="flex-1 rounded-field border border-line bg-paper px-3.5 py-3 text-[15px] text-fg outline-none transition-colors placeholder:text-fg-faint focus:border-accent focus:ring-2 focus:ring-accent-soft"
           />
           <button
@@ -169,7 +171,11 @@ export default function MovieInfoForm({
                 Loading…
               </div>
             ) : searchError ? (
-              <div className="text-mono px-4 py-6 text-center text-[11px] uppercase tracking-widest text-danger">
+              <div
+                id="movieTitle-error"
+                role="alert"
+                className="text-mono px-4 py-6 text-center text-[11px] uppercase tracking-widest text-danger"
+              >
                 {searchError}
               </div>
             ) : searchResults.length > 0 ? (
