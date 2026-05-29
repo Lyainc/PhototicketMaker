@@ -25,19 +25,13 @@ interface ChainStampProps {
 const CHAIN_INDEX = new Map(THEATER_CHAINS.map((c) => [c.value, c]));
 const FORMAT_INDEX = new Map(SCREENING_FORMATS.map((f) => [f.value, f]));
 
-const wrapperPaper = (size: number): CSSProperties => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  background: '#fff',
-  padding: `${5 * size}px ${10 * size}px`,
-  boxSizing: 'border-box',
-});
+const LOGO_SHADOW = 'drop-shadow(0 2px 8px rgba(0,0,0,0.85))';
 
 export function ChainStamp({
   chain,
   size = 1,
   surface = 'paper',
-  height = 38,
+  height = 48,
 }: ChainStampProps) {
   if (!chain) return null;
   const entry = CHAIN_INDEX.get(chain);
@@ -45,24 +39,16 @@ export function ChainStamp({
   const src = `/assets/chains_transparent/${entry.file}`;
   const h = height * size;
 
-  if (surface === 'dark') {
-    return (
-      <span style={{ ...wrapperPaper(size), height: h + 10 * size }}>
-        <img
-          src={src}
-          alt={entry.label}
-          style={{ height: '100%', width: 'auto', display: 'block' }}
-          draggable={false}
-          crossOrigin="anonymous"
-        />
-      </span>
-    );
-  }
   return (
     <img
       src={src}
       alt={entry.label}
-      style={{ height: h, width: 'auto', display: 'block' }}
+      style={{
+        height: h,
+        width: 'auto',
+        display: 'block',
+        ...(surface === 'dark' ? { filter: LOGO_SHADOW } : {}),
+      }}
       draggable={false}
       crossOrigin="anonymous"
     />
@@ -84,27 +70,19 @@ export function FormatStamp({
   const entry = FORMAT_INDEX.get(format);
   if (!entry?.file) return null;
   const src = `/assets/formats_transparent/${entry.file}`;
-  // Base 52 (vs ChainStamp's 38): format glyphs are wide/thin so they read smaller at equal height.
-  const h = 52 * size;
+  // Base 64 (vs ChainStamp's 48): format glyphs are wide/thin so they read smaller at equal height.
+  const h = 64 * size;
 
-  if (surface === 'dark') {
-    return (
-      <span style={{ ...wrapperPaper(size), height: h + 10 * size }}>
-        <img
-          src={src}
-          alt={entry.label}
-          style={{ height: '100%', width: 'auto', display: 'block' }}
-          draggable={false}
-          crossOrigin="anonymous"
-        />
-      </span>
-    );
-  }
   return (
     <img
       src={src}
       alt={entry.label}
-      style={{ height: h, width: 'auto', display: 'block' }}
+      style={{
+        height: h,
+        width: 'auto',
+        display: 'block',
+        ...(surface === 'dark' ? { filter: LOGO_SHADOW } : {}),
+      }}
       draggable={false}
       crossOrigin="anonymous"
     />
@@ -419,7 +397,7 @@ export function HorizontalSprockets({
       style={{
         width: 50,
         height: 38,
-        borderRadius: 5,
+        borderRadius: 2,
         background: hole,
         flexShrink: 0,
       }}
@@ -530,6 +508,15 @@ export function pickTitleSize(len: number, sizes: [number, number, number, numbe
   return sizes[3];
 }
 
+export function luminance(hex: string): number {
+  const c = hex.replace('#', '').padEnd(6, '0');
+  const toLinear = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  const r = toLinear(parseInt(c.slice(0, 2), 16) / 255);
+  const g = toLinear(parseInt(c.slice(2, 4), 16) / 255);
+  const b = toLinear(parseInt(c.slice(4, 6), 16) / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
 export function isInkLight(themeColor: string): boolean {
-  return themeColor.toLowerCase() === '#000000';
+  return luminance(themeColor) < 0.18;
 }

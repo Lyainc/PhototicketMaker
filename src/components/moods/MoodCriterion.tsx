@@ -20,7 +20,7 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl }: Moo
   const isLight = isInkLight(themeColor);
   const ink = isLight ? '#0d0c0a' : themeColor;
   const titleLen = d.title.length;
-  const titleSize = pickTitleSize(titleLen, [120, 96, 72, 56]);
+  const titleSize = pickTitleSize(titleLen, [104, 84, 64, 50]);
 
   const globalScrim = isLight
     ? 'linear-gradient(180deg, rgba(245,240,232,0.7) 0%, rgba(245,240,232,0.35) 30%, rgba(245,240,232,0.5) 60%, rgba(245,240,232,0.95) 100%)'

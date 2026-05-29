@@ -33,7 +33,7 @@ const cellLabelStyle: CSSProperties = {
 const cellValueSans: CSSProperties = {
   color: FS_INK,
   fontWeight: 700,
-  fontSize: 17,
+  fontSize: 18,
   fontFamily: FONT_SANS,
   letterSpacing: -0.2,
 };
@@ -46,7 +46,7 @@ const cellValueMono: CSSProperties = {
 };
 
 export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProps) {
-  const titleSize = pickTitleSize(d.title.length, [88, 72, 56, 44]);
+  const titleSize = pickTitleSize(d.title.length, [76, 60, 48, 38]);
 
   const captionScrim =
     'linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.55) 18%, rgba(10,10,10,0.92) 60%, rgba(10,10,10,0.98) 100%)';
@@ -112,18 +112,10 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl }: MoodProp
         <span>FRAME 14 / 24 →</span>
       </div>
 
-      {/* Stamps — chain top-left on cream pill, format top-right rotated */}
+      {/* Stamps — chain top-left, format top-right rotated */}
       {components.chain && (
-        <div
-          style={{
-            position: 'absolute',
-            left: 28,
-            top: 132,
-            background: 'rgba(246,241,228,0.95)',
-            padding: '7px 12px',
-          }}
-        >
-          <ChainStamp chain={components.chain} size={1.1} surface="paper" height={36} />
+        <div style={{ position: 'absolute', left: 28, top: 132 }}>
+          <ChainStamp chain={components.chain} size={1.0} surface="dark" height={48} />
         </div>
       )}
 

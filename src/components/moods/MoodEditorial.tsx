@@ -24,7 +24,7 @@ const POSTER_W = 640;
 export function MoodEditorial({ movieInfo: d, components, croppedImageUrl }: MoodProps) {
   const themeColor = components.themeColor || '#FFFFFF';
   const accent = themeColor.toLowerCase() === '#ffffff' ? '#a8312a' : themeColor;
-  const titleSize = pickTitleSize(d.title.length, [124, 102, 80, 60]);
+  const titleSize = pickTitleSize(d.title.length, [108, 88, 70, 52]);
   const bookingNo = resolveBookingNo(d);
   const serialNo = resolveSerialNo(d);
   const watchToken = d.watchDateFormat || 'kr-compact';

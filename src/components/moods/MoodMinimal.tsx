@@ -29,7 +29,7 @@ const metaLabelStyle = (ink: string): CSSProperties => ({
 
 const metaValueStyle = (ink: string): CSSProperties => ({
   fontWeight: 700,
-  fontSize: 22,
+  fontSize: 23,
   fontFamily: FONT_SANS,
   letterSpacing: -0.2,
   color: ink,
@@ -41,7 +41,7 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl }: MoodP
   const isLight = isInkLight(themeColor);
   const ink = isLight ? '#0d0c0a' : themeColor;
   const titleLen = d.title.length;
-  const titleSize = pickTitleSize(titleLen, [110, 88, 70, 58]);
+  const titleSize = pickTitleSize(titleLen, [96, 78, 62, 50]);
 
   const scrimGrad = isLight
     ? 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(245,240,232,0.85) 35%, rgba(245,240,232,0.98) 100%)'
