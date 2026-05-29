@@ -57,6 +57,9 @@ prototype.html
 # 디자인 시안 및 와이어프레임 HTML 파일
 /public/opendesign/
 
+# 테스트용 샘플 이미지
+/public/sample/
+
 # IDE 설정 (개인 선호도)
 .vscode/
 .idea/
