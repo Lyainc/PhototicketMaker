@@ -88,3 +88,5 @@ AUDIT_REPORT.md
 audit-test-runner.sh
 autonomous-dev-loop.v4.md
 .audit-baseline/
+
+.claude-kit/
