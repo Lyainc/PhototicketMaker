@@ -40,6 +40,16 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
   const releaseClean = formatDate(d.releaseDate, releaseToken, releaseGran);
   const reissueClean = d.isReissue ? formatDate(d.reissueDate, releaseToken, releaseGran) : '';
 
+  const titleVal       = gate(fv?.title, d.title);
+  const titleOgVal     = gate(fv?.titleOg, d.titleOg);
+  const actorsVal      = gate(fv?.actors, d.actors);
+  const watchDateVal   = gate(fv?.watchDate, watchDateClean);
+  const theaterVal     = gate(fv?.theater, d.theater);
+  const screenVal      = gate(fv?.screen, d.screen);
+  const seatVal        = gate(fv?.seat, d.seat);
+  const releaseDateVal = gate(fv?.releaseDate, releaseClean);
+  const reissueVal     = gate(fv?.reissue, reissueClean);
+
   return (
     <div
       style={{
@@ -170,7 +180,7 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
       >
         <div style={{ height: 2, background: ink, opacity: 0.6, marginBottom: 28 }} />
 
-        {gate(fv?.titleOg, d.titleOg) && (
+        {titleOgVal && (
           <div
             style={{
               fontStyle: 'italic',
@@ -182,11 +192,11 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
               marginBottom: 16,
             }}
           >
-            {gate(fv?.titleOg, d.titleOg)}
+            {titleOgVal}
           </div>
         )}
 
-        {gate(fv?.title, d.title) && (
+        {titleVal && (
           <div
             style={{
               fontWeight: 800,
@@ -197,11 +207,11 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
               marginBottom: 28,
             }}
           >
-            {gate(fv?.title, d.title)}
+            {titleVal}
           </div>
         )}
 
-        {gate(fv?.actors, d.actors) && (
+        {actorsVal && (
           <div
             style={{
               fontStyle: 'italic',
@@ -217,7 +227,7 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
               overflow: 'hidden',
             }}
           >
-            with {gate(fv?.actors, d.actors)}
+            with {actorsVal}
           </div>
         )}
 
@@ -251,12 +261,12 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
           }}
         >
           {[
-            gate(fv?.theater, d.theater),
-            gate(fv?.screen, d.screen),
-            gate(fv?.seat, d.seat) && `SEAT ${gate(fv?.seat, d.seat)}`,
-            gate(fv?.watchDate, watchDateClean),
-            gate(fv?.releaseDate, releaseClean) && `REL ${gate(fv?.releaseDate, releaseClean)}`,
-            gate(fv?.reissue, reissueClean) && `RE-REL ${gate(fv?.reissue, reissueClean)}`,
+            theaterVal,
+            screenVal,
+            seatVal && `SEAT ${seatVal}`,
+            watchDateVal,
+            releaseDateVal && `REL ${releaseDateVal}`,
+            reissueVal && `RE-REL ${reissueVal}`,
           ]
             .filter(Boolean)
             .join('  ·  ')}

@@ -58,6 +58,18 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
   const releaseClean = formatDate(d.releaseDate, releaseToken, releaseGran);
   const reissueClean = d.isReissue ? formatDate(d.reissueDate, releaseToken, releaseGran) : '';
 
+  const titleVal       = gate(fv?.title, d.title);
+  const titleOgVal     = gate(fv?.titleOg, d.titleOg);
+  const actorsVal      = gate(fv?.actors, d.actors);
+  const watchDateVal   = gate(fv?.watchDate, watchDateClean);
+  const watchTimeVal   = gate(fv?.watchTime, d.watchTime);
+  const theaterVal     = gate(fv?.theater, d.theater);
+  const screenVal      = gate(fv?.screen, d.screen);
+  const seatVal        = gate(fv?.seat, d.seat);
+  const runtimeVal     = gate(fv?.runtime, d.runtime);
+  const releaseDateVal = gate(fv?.releaseDate, releaseClean);
+  const reissueVal     = gate(fv?.reissue, reissueClean);
+
   return (
     <div
       style={{
@@ -91,7 +103,7 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
         }}
       >
         <ChainStamp chain={components.chain} size={1.25} />
-        {(gate(fv?.watchDate, watchDateClean) || gate(fv?.watchTime, d.watchTime)) && (
+        {(watchDateVal || watchTimeVal) && (
           <div
             style={{
               fontWeight: 700,
@@ -102,11 +114,11 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
               textAlign: 'right',
             }}
           >
-            {gate(fv?.watchDate, watchDateClean)}
-            {gate(fv?.watchTime, d.watchTime) && (
+            {watchDateVal}
+            {watchTimeVal && (
               <>
-                {gate(fv?.watchDate, watchDateClean) && <br />}
-                <span style={{ opacity: 0.6, fontSize: 18 }}>{gate(fv?.watchTime, d.watchTime)}</span>
+                {watchDateVal && <br />}
+                <span style={{ opacity: 0.6, fontSize: 18 }}>{watchTimeVal}</span>
               </>
             )}
           </div>
@@ -128,7 +140,7 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
 
       {/* Bottom block */}
       <div style={{ position: 'absolute', left: 56, right: 56, bottom: 56 }}>
-        {gate(fv?.titleOg, d.titleOg) && (
+        {titleOgVal && (
           <div
             style={{
               fontWeight: 700,
@@ -140,11 +152,11 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
               marginBottom: 18,
             }}
           >
-            {gate(fv?.titleOg, d.titleOg)}
+            {titleOgVal}
           </div>
         )}
 
-        {gate(fv?.title, d.title) && (
+        {titleVal && (
           <div
             style={{
               fontWeight: titleLen > 12 ? 400 : 300,
@@ -155,13 +167,13 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
               marginBottom: 36,
             }}
           >
-            {gate(fv?.title, d.title)}
+            {titleVal}
           </div>
         )}
 
         <div style={{ height: 2, background: ink, opacity: 0.45, marginBottom: 22 }} />
 
-        {gate(fv?.actors, d.actors) && (
+        {actorsVal && (
           <div
             style={{
               fontWeight: 500,
@@ -190,11 +202,11 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
             >
               CAST
             </span>
-            {gate(fv?.actors, d.actors)}
+            {actorsVal}
           </div>
         )}
 
-        {(gate(fv?.releaseDate, releaseClean) || gate(fv?.reissue, reissueClean)) && (
+        {(releaseDateVal || reissueVal) && (
           <div
             style={{
               fontWeight: 600,
@@ -205,9 +217,9 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
               marginBottom: 30,
             }}
           >
-            {gate(fv?.releaseDate, releaseClean) && <>RELEASED · {gate(fv?.releaseDate, releaseClean)}</>}
-            {gate(fv?.releaseDate, releaseClean) && gate(fv?.reissue, reissueClean) && <>{'  ·  '}</>}
-            {gate(fv?.reissue, reissueClean) && <>RE-RELEASED · {gate(fv?.reissue, reissueClean)}</>}
+            {releaseDateVal && <>RELEASED · {releaseDateVal}</>}
+            {releaseDateVal && reissueVal && <>{'  ·  '}</>}
+            {reissueVal && <>RE-RELEASED · {reissueVal}</>}
           </div>
         )}
 
@@ -230,36 +242,36 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
               alignItems: 'baseline',
             }}
           >
-            {(gate(fv?.watchDate, watchDateClean) || gate(fv?.watchTime, d.watchTime)) && (
+            {(watchDateVal || watchTimeVal) && (
               <>
                 <div style={metaLabelStyle(ink)}>관람일</div>
                 <div style={metaValueStyle(ink)}>
-                  {gate(fv?.watchDate, watchDateClean)}
-                  {gate(fv?.watchDate, watchDateClean) && gate(fv?.watchTime, d.watchTime) && ' '}
-                  {gate(fv?.watchTime, d.watchTime) && <span style={{ opacity: 0.6 }}>{gate(fv?.watchTime, d.watchTime)}</span>}
+                  {watchDateVal}
+                  {watchDateVal && watchTimeVal && ' '}
+                  {watchTimeVal && <span style={{ opacity: 0.6 }}>{watchTimeVal}</span>}
                 </div>
               </>
             )}
-            {(gate(fv?.theater, d.theater) || gate(fv?.screen, d.screen)) && (
+            {(theaterVal || screenVal) && (
               <>
                 <div style={metaLabelStyle(ink)}>상영관</div>
                 <div style={metaValueStyle(ink)}>
-                  {gate(fv?.theater, d.theater)}
-                  {gate(fv?.theater, d.theater) && gate(fv?.screen, d.screen) ? ` · ${gate(fv?.screen, d.screen)}` : gate(fv?.screen, d.screen) || ''}
+                  {theaterVal}
+                  {theaterVal && screenVal ? ` · ${screenVal}` : screenVal || ''}
                 </div>
               </>
             )}
 
-            {gate(fv?.seat, d.seat) && (
+            {seatVal && (
               <>
                 <div style={metaLabelStyle(ink)}>좌석</div>
-                <div style={metaValueStyle(ink)}>{gate(fv?.seat, d.seat)}</div>
+                <div style={metaValueStyle(ink)}>{seatVal}</div>
               </>
             )}
-            {gate(fv?.runtime, d.runtime) && (
+            {runtimeVal && (
               <>
                 <div style={metaLabelStyle(ink)}>러닝타임</div>
-                <div style={metaValueStyle(ink)}>{gate(fv?.runtime, d.runtime)}</div>
+                <div style={metaValueStyle(ink)}>{runtimeVal}</div>
               </>
             )}
 
