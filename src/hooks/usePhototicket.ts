@@ -64,7 +64,6 @@ const INITIAL_STATE: PhototicketState = {
     texture: 'none',
     posterOpacity: 0.5,
     themeColor: '#FFFFFF',
-    textureIntensity: 0.65,
   },
   recommendedColors: [],
   croppedImageUrl: null,
