@@ -53,6 +53,9 @@ export interface TicketComponents {
   texture: string;
   posterOpacity: number;
   themeColor: string;
+  vignette: number;
+  temperature: number;
+  grain: number;
 }
 
 export interface PhototicketState {
