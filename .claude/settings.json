@@ -10,6 +10,7 @@
     "pyright-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "chrome-devtools-mcp@claude-plugins-official": true,
-    "vault-bridge@Lyainc-claude-kit": true
+    "vault-bridge@Lyainc-claude-kit": true,
+    "vercel@claude-plugins-official": true
   }
 }
