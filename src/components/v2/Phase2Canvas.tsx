@@ -4,6 +4,7 @@ import FormatPicker from '@/components/wizard/FormatPicker';
 import TexturePicker from '@/components/wizard/TexturePicker';
 import BrightnessSlider from '@/components/wizard/BrightnessSlider';
 import ColorPicker from '@/components/wizard/ColorPicker';
+import { allowedFormatsForChain } from '@/utils/chainFormatMap';
 import type { usePhototicket } from '@/hooks/usePhototicket';
 import type { LayoutId } from '@/types';
 
@@ -52,18 +53,24 @@ export function Phase2Canvas({ photo, onGoBack }: Phase2CanvasProps) {
         <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Theater</h3>
         <TheaterChainPicker
           value={components.chain}
-          onChange={(chain) => setComp({ chain })}
+          onChange={(chain) => {
+            const allowed = allowedFormatsForChain(chain);
+            const keepFormat = allowed ? allowed.includes(components.format) : false;
+            setComp({ chain, ...(keepFormat ? {} : { format: '' }) });
+          }}
         />
       </section>
 
-      <section className="space-y-4">
-        <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Format</h3>
-        <FormatPicker
-          value={components.format}
-          onChange={(format) => setComp({ format })}
-          chain={components.chain}
-        />
-      </section>
+      {allowedFormatsForChain(components.chain) !== null && (
+        <section className="space-y-4">
+          <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Format</h3>
+          <FormatPicker
+            value={components.format}
+            onChange={(format) => setComp({ format })}
+            chain={components.chain}
+          />
+        </section>
+      )}
 
       <section className="space-y-4">
         <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Texture</h3>
