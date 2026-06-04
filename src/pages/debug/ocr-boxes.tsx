@@ -39,7 +39,7 @@ export default function DebugOcrBoxes() {
                 height: item.box.h,
               }}
             >
-              <span className="bg-accent text-white text-[10px] px-1 absolute -top-4 left-0 whitespace-nowrap z-10 rounded-sm">
+              <span className="bg-accent text-white text-[10px] px-1 absolute -top-4 left-0 whitespace-nowrap z-10 rounded-sm opacity-80 hover:opacity-100 hover:z-50 transition-opacity cursor-default">
                 {item.field ?? 'null'}: {item.text}
               </span>
             </div>

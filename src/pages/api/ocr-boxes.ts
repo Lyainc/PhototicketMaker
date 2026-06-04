@@ -105,10 +105,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       field: item.field || null,
       box: item.box
         ? {
-            x: Math.max(0, item.box.x || 0),
-            y: Math.max(0, item.box.y || 0),
-            w: Math.max(0, item.box.w || 0),
-            h: Math.max(0, item.box.h || 0),
+            x: Math.round(Math.max(0, item.box.x || 0)),
+            y: Math.round(Math.max(0, item.box.y || 0)),
+            w: Math.round(Math.max(0, item.box.w || 0)),
+            h: Math.round(Math.max(0, item.box.h || 0)),
           }
         : null,
     }));

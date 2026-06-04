@@ -20,6 +20,15 @@ function blobToBase64(blob: Blob): Promise<string> {
   });
 }
 
+/** 파일 전처리 및 Base64 페이로드 준비 */
+async function prepareImagePayload(file: File) {
+  const blob = await preprocessForOcr(file);
+  const base64 = await blobToBase64(blob);
+  const mimeType = blob.type || 'image/jpeg';
+  const preprocessedImage = `data:${mimeType};base64,${base64}`;
+  return { base64, mimeType, preprocessedImage };
+}
+
 /**
  * 티켓 스크린샷 → 전처리(하단 크롭·768px·JPEG) → `/api/ocr`(GPT-4o mini vision)
  * → 구조화 필드. 서버가 채워진 필드만 주므로 반환 객체엔 인식된 값만 담긴다.
@@ -33,10 +42,7 @@ export async function runOcr(file: File): Promise<OcrResult> {
   if (typeof window === 'undefined') return {};
 
   try {
-    const blob = await preprocessForOcr(file);
-    const base64 = await blobToBase64(blob);
-    const mimeType = blob.type || 'image/jpeg';
-    const preprocessedImage = `data:${mimeType};base64,${base64}`;
+    const { base64, mimeType, preprocessedImage } = await prepareImagePayload(file);
 
     const res = await fetch('/api/ocr', {
       method: 'POST',
@@ -73,10 +79,7 @@ export async function runOcrBoxes(file: File): Promise<OcrBoxesResult> {
   if (typeof window === 'undefined') return { items: [] };
 
   try {
-    const blob = await preprocessForOcr(file);
-    const base64 = await blobToBase64(blob);
-    const mimeType = blob.type || 'image/jpeg';
-    const preprocessedImage = `data:${mimeType};base64,${base64}`;
+    const { base64, mimeType, preprocessedImage } = await prepareImagePayload(file);
 
     const res = await fetch('/api/ocr-boxes', {
       method: 'POST',
