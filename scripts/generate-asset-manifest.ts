@@ -10,7 +10,7 @@
  *
  * Run via `bun scripts/generate-asset-manifest.ts` (auto-fires on predev/prebuild).
  */
-import { readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = join(import.meta.dir, '..');
@@ -27,6 +27,12 @@ interface Entry {
 }
 
 function scan(dir: string, kind: string): Entry[] {
+  // Bundled logos were removed (copyright); the directory may be absent on a
+  // fresh clone since git doesn't track empty dirs. Treat absence as "no assets".
+  if (!existsSync(dir)) {
+    console.warn(`[asset-manifest] ${kind} directory not found, treating as empty: ${dir.replace(ROOT + '/', '')}`);
+    return [];
+  }
   const files = readdirSync(dir)
     .filter((f) => !f.startsWith('.') && f.toLowerCase().endsWith('.png'))
     .sort();

@@ -103,21 +103,19 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl, field
           }}
         >
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 18 }}>
-            <ChainStamp chain={components.chain} size={1.0} />
-            {components.format && (
-              <>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: 1,
-                    height: 26,
-                    background: PAPER_DIM,
-                    flexShrink: 0,
-                  }}
-                />
-                <FormatStamp format={components.format} size={1.2} />
-              </>
+            <ChainStamp chain={components.chain} visible={components.chainVisible} size={1.0} />
+            {components.chainVisible && components.formatVisible && (
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 1,
+                  height: 26,
+                  background: PAPER_DIM,
+                  flexShrink: 0,
+                }}
+              />
             )}
+            <FormatStamp format={components.format} visible={components.formatVisible} size={1.2} />
           </div>
           {gate(fv?.runtime, d.runtime) && (
             <div
