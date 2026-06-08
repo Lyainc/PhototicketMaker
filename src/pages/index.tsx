@@ -4,7 +4,6 @@ import { usePhase } from '@/hooks/usePhase';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useMatchMedia } from '@/hooks/useMatchMedia';
 import { downloadTicketAsJpeg } from '@/utils/captureToImage';
-import { extractColors } from '@/utils/colorExtraction';
 import { getLayout } from '@/utils/layouts';
 import { AppShell } from '@/components/v2/AppShell';
 import { Phase1Canvas } from '@/components/v2/Phase1Canvas';
@@ -54,10 +53,12 @@ export default function Home() {
   }, [theme]);
 
   // croppedImageUrl 변경 시 색상 추출
+  // colorExtraction(~167줄 K-means)은 업로드 시점에만 동적 로드 → 초기 페이지 청크에서 제외
   useEffect(() => {
     if (!croppedImageUrl) return;
     let cancelled = false;
-    extractColors(croppedImageUrl)
+    import('@/utils/colorExtraction')
+      .then(({ extractColors }) => extractColors(croppedImageUrl))
       .then((colors) => {
         if (!cancelled) setRecommendedColors(colors);
       })

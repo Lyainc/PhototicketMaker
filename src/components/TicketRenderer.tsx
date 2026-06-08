@@ -1,12 +1,17 @@
 'use client';
 
 import { forwardRef, memo, useEffect, useRef, useState } from 'react';
-import { MoodMinimal } from './moods/MoodMinimal';
-import { MoodCriterion } from './moods/MoodCriterion';
-import { Mood35mm } from './moods/Mood35mm';
-import { MoodEditorial } from './moods/MoodEditorial';
+import dynamic from 'next/dynamic';
 import { getLayout } from '@/utils/layouts';
 import type { LayoutId, MovieInfo, TicketComponents, TicketField } from '@/types';
+
+// 무드 4종은 한 번에 하나만 렌더되므로 각각 별도 청크로 분리해 초기 번들에서 제외.
+// ssr: false — 캡처(captureToImage)는 프리뷰가 이미 보이는(=청크 로드 완료) 시점의
+// 사용자 액션이라 로딩 placeholder와 캡처 타이밍이 충돌하지 않음.
+const MoodMinimal = dynamic(() => import('./moods/MoodMinimal').then((m) => m.MoodMinimal), { ssr: false });
+const MoodCriterion = dynamic(() => import('./moods/MoodCriterion').then((m) => m.MoodCriterion), { ssr: false });
+const Mood35mm = dynamic(() => import('./moods/Mood35mm').then((m) => m.Mood35mm), { ssr: false });
+const MoodEditorial = dynamic(() => import('./moods/MoodEditorial').then((m) => m.MoodEditorial), { ssr: false });
 
 interface TicketRendererProps {
   croppedImageUrl: string;
