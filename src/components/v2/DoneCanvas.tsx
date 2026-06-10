@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import TicketRenderer from '@/components/TicketRenderer';
+import { getLayout } from '@/utils/layouts';
 import { PreviewFilmCell } from './PreviewFilmCell';
 import { PrimaryCta } from './PrimaryCta';
 import type { MovieInfo, TicketComponents, TicketField } from '@/types';
@@ -32,6 +33,8 @@ export function DoneCanvas({
   onDownload,
   onBack,
 }: DoneCanvasProps) {
+  const layout = getLayout(components.layout);
+
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
@@ -78,6 +81,10 @@ export function DoneCanvas({
           successLabel="저장됨!"
           onClick={onDownload}
         />
+        {/* 내보내기 스펙 — 캡처는 natural px × pixelRatio 2 (captureToImage 참고) */}
+        <p className="text-mono text-center text-[10px] uppercase tracking-widest text-fg-faint">
+          {layout.width}×{layout.height} px ×2 · JPEG
+        </p>
 
         <div className="grid grid-cols-2 gap-3">
           <button
@@ -87,7 +94,7 @@ export function DoneCanvas({
             className="text-mono inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-field-sm border border-line bg-surface-elevated text-[11px] uppercase tracking-widest text-fg-faint cursor-not-allowed"
           >
             SNS 공유
-            <span className="rounded-chip bg-accent-soft px-1.5 py-0.5 text-[8px] text-accent">준비 중</span>
+            <span className="rounded-chip bg-accent-soft px-1.5 py-0.5 text-[10px] text-accent">준비 중</span>
           </button>
           <button
             type="button"
@@ -96,7 +103,7 @@ export function DoneCanvas({
             className="text-mono inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-field-sm border border-line bg-surface-elevated text-[11px] uppercase tracking-widest text-fg-faint cursor-not-allowed"
           >
             퍼마링크
-            <span className="rounded-chip bg-accent-soft px-1.5 py-0.5 text-[8px] text-accent">준비 중</span>
+            <span className="rounded-chip bg-accent-soft px-1.5 py-0.5 text-[10px] text-accent">준비 중</span>
           </button>
         </div>
       </div>

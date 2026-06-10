@@ -3,6 +3,8 @@ import { Sprocket } from './Sprocket';
 interface MobileDockProps {
   ctaLabel: string;
   disabled?: boolean;
+  /** CTA가 비활성일 때 이유를 한 줄로 안내 (데스크탑 rail의 RailReason과 패리티). */
+  hint?: string;
   hasImage: boolean;
   previewThumb?: string;
   onPreviewClick?: () => void;
@@ -12,6 +14,7 @@ interface MobileDockProps {
 export function MobileDock({
   ctaLabel,
   disabled = false,
+  hint,
   hasImage,
   previewThumb,
   onPreviewClick,
@@ -34,6 +37,9 @@ export function MobileDock({
         background: 'var(--surface-translucent)',
       }}
     >
+      {disabled && hint && (
+        <p className="px-4 pt-2 text-[13px] leading-none text-fg-muted">{hint}</p>
+      )}
       <div className="flex items-center gap-3 px-4 py-3">
         <button
           type="button"

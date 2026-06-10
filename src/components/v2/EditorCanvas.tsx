@@ -370,6 +370,12 @@ export function EditorCanvas({ photo, onPendingFetchChange }: EditorCanvasProps)
         </div>
       </section>
 
+      {/* 정보 입력 ↔ 티켓 디자인 영역 경계 — 단일 스크롤에서 스캔을 돕는 시각 구분 */}
+      <div className="flex items-center gap-3 pt-2" aria-hidden="true">
+        <span className="text-mono text-[10px] uppercase tracking-widest text-fg-faint">Ticket Design</span>
+        <div className="h-px flex-1 bg-line" />
+      </div>
+
       <section className="space-y-4">
         <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Mood</h3>
         <LayoutPicker

@@ -17,6 +17,9 @@ import TicketRenderer from '@/components/TicketRenderer';
 
 type CtaState = 'idle' | 'loading' | 'success' | 'disabled';
 
+// 모바일 에디터에서 고정 dock에 콘텐츠가 가리지 않게 하단 여백 확보 (렌더마다 새 객체 생성 방지)
+const DOCK_PADDING = { paddingBottom: 80 } as const;
+
 export default function Home() {
   // SSR safe: 초기값 'light', mount 후 localStorage/prefers-color-scheme 읽기
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -27,7 +30,7 @@ export default function Home() {
 
   const ticketRef = useRef<HTMLDivElement>(null);
   const photo = usePhototicket();
-  const view = useScreen({ state: photo.state, pendingFetch });
+  const { screen, goTo, canExport } = useScreen({ state: photo.state, pendingFetch });
 
   const { croppedImageUrl } = photo.state;
   const { setRecommendedColors } = photo;
@@ -74,13 +77,6 @@ export default function Home() {
     const timer = setTimeout(() => setCtaState('idle'), 2000);
     return () => clearTimeout(timer);
   }, [ctaState]);
-
-  // 완료 화면 복원 가드 — 포스터(blob)는 세션에 영속되지 않으므로, 새로고침으로
-  // 'done'이 복원됐는데 내보낼 티켓이 없으면 에디터로 되돌린다.
-  const { screen, hydrated, goTo, canExport } = view;
-  useEffect(() => {
-    if (hydrated && screen === 'done' && !croppedImageUrl) goTo('editor');
-  }, [hydrated, screen, croppedImageUrl, goTo]);
 
   const handleDownload = useCallback(async () => {
     const node = ticketRef.current;
@@ -140,7 +136,7 @@ export default function Home() {
         onThemeChange={setTheme}
         rail={screen === 'editor' ? rail : undefined}
       >
-        <div style={isMobile && screen === 'editor' ? { paddingBottom: 80 } : {}}>
+        <div style={isMobile && screen === 'editor' ? DOCK_PADDING : undefined}>
           <div key={screen} className="screen-in">
             {screen === 'editor' ? (
               <EditorCanvas photo={photo} onPendingFetchChange={setPendingFetch} />
@@ -164,6 +160,7 @@ export default function Home() {
         <MobileDock
           ctaLabel="티켓 완성 →"
           disabled={!canExport}
+          hint={canExport ? undefined : railMessage}
           hasImage={!!croppedImageUrl}
           previewThumb={croppedImageUrl ?? undefined}
           onPreviewClick={() => setLightboxOpen(true)}
