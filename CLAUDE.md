@@ -45,7 +45,7 @@ bun run start   # Run production server (after build)
 - **Picker**: `src/components/LayoutPicker.tsx` — typed `Record<LayoutId, ...>` thumbnail registry; renaming a layout id breaks the lookup at compile time.
 - **Export**: `src/utils/captureToImage.ts` — awaits `document.fonts.ready` + image loads, then dynamically imports `html-to-image` and forces `transform: 'none'` during capture (otherwise the preview scale wrapper distorts output). Output is a JPEG data URL at the layout's natural pixel dimensions × `pixelRatio: 2`.
 - **Memory Management**: Always `URL.revokeObjectURL` on blob URLs created for cropped images. Download (`downloadTicketAsJpeg`) decodes the capture's base64 `data:` URL via `atob` → `Uint8Array` → `Blob` → `createObjectURL`, then revokes after the anchor click. **No `fetch(data:)`** — Vercel CSP `connect-src` blocks it, so base64 is decoded directly (CSP-safe).
-- **Asset manifest**: `public/assets/{chains,formats}_transparent/` filenames were the single source of truth, but to avoid copyright issues, **bundled logos are removed**. Users now upload logos directly via the UI in Phase 2. The `scripts/generate-asset-manifest.ts` script still exists for local testing if you place your own PNGs.
+- **Asset manifest**: `public/assets/{chains,formats}_transparent/` filenames were the single source of truth, but to avoid copyright issues, **bundled logos are removed**. Users now upload logos directly via the editor's Theater/Format sections (`TheaterChainPicker`/`FormatPicker` inside `src/components/v2/EditorCanvas.tsx`). The `scripts/generate-asset-manifest.ts` script still exists for local testing if you place your own PNGs.
 - **Dashed Placeholders**: If a user toggles chain/format ON but doesn't upload a logo, a dashed placeholder appears in the preview. This placeholder is explicitly ignored during `html-to-image` capture via the `data-hide-on-export` attribute.
 
 ### 🔍 OCR Pipeline (티켓 스크린샷 자동 인식)
@@ -60,5 +60,5 @@ bun run start   # Run production server (after build)
 - **Env**: `AI_GATEWAY_API_KEY`(또는 OIDC, OCR 필수) · `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`(선택) · `KOBIS_API_KEY`(title→KOBIS 조회).
 
 ### 🚧 Current Project Status
-- **Completed**: MVP + KOBIS API + Manual Cropping + TCG Premium Textures + Editorial Cinema redesign + 4-Mood layout system + GPT-4o mini OCR(Tesseract 클라이언트에서 전환).
+- **Completed**: MVP + KOBIS API + Manual Cropping + TCG Premium Textures + Editorial Cinema redesign + 4-Mood layout system + GPT-4o mini OCR(Tesseract 클라이언트에서 전환) + 단일 에디터 재편(#86: 2-step Phase 폐기 → `EditorCanvas` + `DoneCanvas`, `useScreen` 훅) + Serial/Collection 입력·EditionMark 제거(#84) + K-means 색 추출 Web Worker 오프로드(#80: `src/utils/colorExtraction.worker.ts`).
 - **Next Up**: 확정 로드맵 없음 (이전 TMDB·Supabase 계획은 폐기).
