@@ -4,13 +4,19 @@ import MovieInfoForm from '@/components/MovieInfoForm';
 import Field from '@/components/ui/Field';
 import OptionalDetailsAccordion from '@/components/wizard/OptionalDetailsAccordion';
 import RatingPicker from '@/components/wizard/RatingPicker';
+import LayoutPicker from '@/components/LayoutPicker';
+import TheaterChainPicker from '@/components/wizard/TheaterChainPicker';
+import FormatPicker from '@/components/wizard/FormatPicker';
+import TexturePicker from '@/components/wizard/TexturePicker';
+import BrightnessSlider from '@/components/wizard/BrightnessSlider';
+import ColorPicker from '@/components/wizard/ColorPicker';
 import { OcrUploadCard } from './OcrUploadCard';
 import type { OcrDirectField } from './OcrUploadCard';
 import { formatDate } from '@/utils/dateFormat';
-import type { DateFormatToken, TicketField, MovieInfo } from '@/types';
+import type { DateFormatToken, TicketField, MovieInfo, LayoutId } from '@/types';
 import type { usePhototicket } from '@/hooks/usePhototicket';
 
-interface Phase1CanvasProps {
+interface EditorCanvasProps {
   photo: ReturnType<typeof usePhototicket>;
   onPendingFetchChange: (pending: boolean) => void;
 }
@@ -55,10 +61,11 @@ function OcrChip() {
   );
 }
 
-export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps) {
-  const { movieInfo, fieldVisibility } = photo.state;
+export function EditorCanvas({ photo, onPendingFetchChange }: EditorCanvasProps) {
+  const { movieInfo, fieldVisibility, components, recommendedColors } = photo.state;
   const setInfo = photo.updateMovieInfo;
   const setField = photo.updateFieldVisibility;
+  const setComp = photo.updateComponents;
   const watchToken = movieInfo.watchDateFormat || 'kr-compact';
 
   const allOn = FIELD_ORDER.every((f) => fieldVisibility[f]);
@@ -84,7 +91,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
     setOcrFilledFields(keys);
     setOcrSnapshot(prevValues);
     setAccordionOpen(true);
-    
+
     // Smooth scroll into view if offscreen
     setTimeout(() => {
       accordionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -98,7 +105,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
     setOcrFilledFields(new Set());
     setOcrSnapshot(null);
   }
-  
+
   function handleConfirmOcr() {
     setOcrSnapshot(null);
   }
@@ -106,12 +113,11 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
   return (
     <div className="space-y-8">
       <header className="space-y-1.5">
-        <p className="text-mono text-[10px] uppercase tracking-widest text-accent">Phase 1</p>
         <h2 className="font-display text-2xl font-medium tracking-tight text-fg">
-          포스터와 영화 정보
+          티켓 만들기
         </h2>
         <p className="max-w-[42ch] text-[13px] leading-relaxed text-fg-muted">
-          제목 · 원제 · 개봉연도가 필수예요. 3가지만 채우면 바로 다음으로 넘어갈 수 있어요.
+          제목 · 원제 · 개봉연도가 필수예요. 포스터부터 무드까지 이 화면에서 한 번에 끝나요.
         </p>
       </header>
 
@@ -148,7 +154,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
             <div className="flex items-baseline justify-between">
               <div className="flex items-center gap-1.5">
                 <label
-                  htmlFor="p1-watchDate"
+                  htmlFor="editor-watchDate"
                   className="text-mono block text-[10px] uppercase tracking-widest text-fg-muted"
                 >
                   Watched
@@ -160,7 +166,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
               </span>
             </div>
             <input
-              id="p1-watchDate"
+              id="editor-watchDate"
               type="date"
               value={movieInfo.watchDate || ''}
               disabled={!fieldVisibility.watchDate}
@@ -197,7 +203,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
               <div className="flex justify-start"><OcrChip /></div>
             )}
             <Field
-              id="p1-theater"
+              id="editor-theater"
               label="Theater"
               optional
               value={movieInfo.theater || ''}
@@ -212,7 +218,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
 
           <div className={dim(fieldVisibility.actors)}>
             <Field
-              id="p1-actors"
+              id="editor-actors"
               label="Cast"
               optional
               value={movieInfo.actors || ''}
@@ -228,7 +234,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
                 <div className="flex justify-start"><OcrChip /></div>
               )}
               <Field
-                id="p1-watchTime"
+                id="editor-watchTime"
                 label="Showtime"
                 type="time"
                 optional
@@ -242,7 +248,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
             </div>
             <div className={dim(fieldVisibility.runtime)}>
               <Field
-                id="p1-runtime"
+                id="editor-runtime"
                 label="Runtime"
                 optional
                 value={movieInfo.runtime || ''}
@@ -259,7 +265,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
                 <div className="flex justify-start"><OcrChip /></div>
               )}
               <Field
-                id="p1-screen"
+                id="editor-screen"
                 label="Screen"
                 optional
                 value={movieInfo.screen || ''}
@@ -276,7 +282,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
                 <div className="flex justify-start"><OcrChip /></div>
               )}
               <Field
-                id="p1-seat"
+                id="editor-seat"
                 label="Seat"
                 optional
                 value={movieInfo.seat || ''}
@@ -295,7 +301,7 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
               <div className="flex justify-start"><OcrChip /></div>
             )}
             <Field
-              id="p1-bookingNumber"
+              id="editor-bookingNumber"
               label="Booking No."
               optional
               value={movieInfo.bookingNumber || ''}
@@ -312,56 +318,109 @@ export function Phase1Canvas({ photo, onPendingFetchChange }: Phase1CanvasProps)
             value={movieInfo.rating}
             onValueChange={(rating) => setInfo({ rating })}
           />
-
-          <div className="space-y-4 border-t border-line pt-5">
-            <div className="flex items-baseline justify-between">
-              <div className="space-y-1">
-                <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Display Fields</h3>
-                <p className="text-mono text-[10px] uppercase tracking-widest text-fg-faint">
-                  {selectedCount}/{FIELD_ORDER.length} selected
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setField(Object.fromEntries(FIELD_ORDER.map((f) => [f, true])) as Record<TicketField, boolean>)}
-                  disabled={allOn}
-                  className="text-mono inline-flex min-h-[32px] items-center rounded-chip border border-line bg-surface-elevated px-2.5 text-[10px] uppercase tracking-widest text-fg transition-colors hover:bg-accent-soft focus-visible:ring-2 focus-visible:ring-accent-soft disabled:opacity-40"
-                >
-                  전체 선택
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setField(Object.fromEntries(FIELD_ORDER.map((f) => [f, false])) as Record<TicketField, boolean>)}
-                  disabled={allOff}
-                  className="text-mono inline-flex min-h-[32px] items-center rounded-chip border border-line bg-surface-elevated px-2.5 text-[10px] uppercase tracking-widest text-fg transition-colors hover:bg-accent-soft focus-visible:ring-2 focus-visible:ring-accent-soft disabled:opacity-40"
-                >
-                  전체 해제
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {FIELD_ORDER.map((field) => {
-                const active = fieldVisibility[field];
-                return (
-                  <button
-                    key={field}
-                    type="button"
-                    onClick={() => setField({ [field]: !active })}
-                    aria-pressed={active}
-                    data-touch="44"
-                    className={`text-mono inline-flex min-h-touch items-center rounded-chip border px-3 text-[10px] uppercase tracking-widest transition-colors focus-visible:ring-2 focus-visible:ring-accent-soft
-                      ${active ? 'border-accent bg-accent text-white' : 'border-line bg-surface-elevated text-fg-muted hover:bg-accent-soft'}`}
-                  >
-                    {FIELD_LABELS[field]}
-                  </button>
-                );
-              })}
-            </div>
           </div>
-        </div>
         </OptionalDetailsAccordion>
       </div>
+
+      {/* Display Fields — 아코디언 밖 독립 섹션. 어떤 항목이 티켓에 찍힐지 한눈에 보이게. */}
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between">
+          <div className="space-y-1">
+            <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Display Fields</h3>
+            <p className="text-mono text-[10px] uppercase tracking-widest text-fg-faint">
+              {selectedCount}/{FIELD_ORDER.length} selected
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setField(Object.fromEntries(FIELD_ORDER.map((f) => [f, true])) as Record<TicketField, boolean>)}
+              disabled={allOn}
+              className="text-mono inline-flex min-h-[32px] items-center rounded-chip border border-line bg-surface-elevated px-2.5 text-[10px] uppercase tracking-widest text-fg transition-colors hover:bg-accent-soft focus-visible:ring-2 focus-visible:ring-accent-soft disabled:opacity-40"
+            >
+              전체 선택
+            </button>
+            <button
+              type="button"
+              onClick={() => setField(Object.fromEntries(FIELD_ORDER.map((f) => [f, false])) as Record<TicketField, boolean>)}
+              disabled={allOff}
+              className="text-mono inline-flex min-h-[32px] items-center rounded-chip border border-line bg-surface-elevated px-2.5 text-[10px] uppercase tracking-widest text-fg transition-colors hover:bg-accent-soft focus-visible:ring-2 focus-visible:ring-accent-soft disabled:opacity-40"
+            >
+              전체 해제
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {FIELD_ORDER.map((field) => {
+            const active = fieldVisibility[field];
+            return (
+              <button
+                key={field}
+                type="button"
+                onClick={() => setField({ [field]: !active })}
+                aria-pressed={active}
+                data-touch="44"
+                className={`text-mono inline-flex min-h-touch items-center rounded-chip border px-3 text-[10px] uppercase tracking-widest transition-colors focus-visible:ring-2 focus-visible:ring-accent-soft
+                  ${active ? 'border-accent bg-accent text-white' : 'border-line bg-surface-elevated text-fg-muted hover:bg-accent-soft'}`}
+              >
+                {FIELD_LABELS[field]}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Mood</h3>
+        <LayoutPicker
+          value={components.layout}
+          onChange={(id: LayoutId) => setComp({ layout: id })}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Theater</h3>
+        <TheaterChainPicker
+          value={components.chain}
+          visible={components.chainVisible}
+          onVisibilityChange={(v) => setComp({ chainVisible: v })}
+          onChange={(chain) => setComp({ chain })}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Format</h3>
+        <FormatPicker
+          value={components.format}
+          visible={components.formatVisible}
+          onVisibilityChange={(v) => setComp({ formatVisible: v })}
+          onChange={(format) => setComp({ format })}
+          chain={components.chain}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-mono text-[10px] uppercase tracking-widest text-fg-muted">Texture</h3>
+        <TexturePicker
+          value={components.texture}
+          onChange={(texture) => setComp({ texture })}
+          croppedImageUrl={photo.state.croppedImageUrl}
+        />
+      </section>
+
+      <section className="space-y-5 rounded-card border border-border bg-surface-elevated p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <BrightnessSlider
+          value={components.posterOpacity}
+          onChange={(posterOpacity) => setComp({ posterOpacity })}
+        />
+        <div className="border-t border-border pt-5">
+          <ColorPicker
+            value={components.themeColor}
+            onChange={(themeColor) => setComp({ themeColor })}
+            recommended={recommendedColors}
+          />
+        </div>
+      </section>
 
       {/* OCR Result Banner */}
       {ocrSnapshot && ocrFilledFields.size > 0 && (

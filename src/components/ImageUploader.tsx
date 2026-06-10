@@ -76,7 +76,7 @@ export default function ImageUploader({ onUpload, isProcessing, hasImage = false
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         data-touch="44"
-        className={`group relative flex h-full w-full flex-col justify-center overflow-hidden rounded-card border bg-paper p-7 text-left shadow-card transition-colors md:p-9
+        className={`group relative flex h-full w-full flex-col justify-center overflow-hidden rounded-card border bg-paper p-5 text-left shadow-card transition-colors md:p-6
           ${isDragging ? 'border-accent bg-accent-soft' : 'border-line hover:border-accent/40'}
           ${busy ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
       >
@@ -85,7 +85,7 @@ export default function ImageUploader({ onUpload, isProcessing, hasImage = false
             <div className="text-mono text-[10px] uppercase tracking-widest text-fg-faint">
               {hasImage ? 'Replace' : 'Drop or click'}
             </div>
-            <p className="text-[20px] font-medium leading-tight text-fg md:text-[22px]">
+            <p className="text-[16px] font-medium leading-tight text-fg md:text-[17px]">
               {hasImage ? '포스터 교체' : '포스터 업로드'}
             </p>
             <p className="max-w-[36ch] text-[13px] leading-relaxed text-fg-muted">
@@ -95,7 +95,7 @@ export default function ImageUploader({ onUpload, isProcessing, hasImage = false
 
           <span
             aria-hidden
-            className="text-mono shrink-0 text-3xl font-normal text-accent transition-transform group-hover:rotate-90 md:text-4xl"
+            className="text-mono shrink-0 text-2xl font-normal text-accent transition-transform group-hover:rotate-90 md:text-3xl"
           >
             +
           </span>

@@ -155,8 +155,8 @@
     font-feature-settings: "ss01", "zero", "cv11";
   }
 
-  .phase-in {
-    animation: phase-in 200ms cubic-bezier(.4,0,.2,1) forwards;
+  .screen-in {
+    animation: screen-in 200ms cubic-bezier(.4,0,.2,1) forwards;
   }
 
   /* 앱 배경 — 단색 + 미세 SVG 노이즈(2~4%)로 평면 탈출. light/dark 공용(저대비 그레이 노이즈). */
@@ -177,21 +177,6 @@
     animation: ocr-scan 1.8s cubic-bezier(.4,0,.6,1) infinite;
   }
 
-  /* 필름 스프로킷 스트립 — 프리뷰 셀 상하단(검은 베이스 + 페이퍼색 홀, 반응형) */
-  .film-sprocket-strip {
-    height: 12px;
-    flex-shrink: 0;
-    background-color: #0a0a0a;
-    background-image: repeating-linear-gradient(
-      to right,
-      transparent 0 7px,
-      rgba(246, 241, 228, 0.85) 7px 16px,
-      transparent 16px 23px
-    );
-    background-size: 23px 7px;
-    background-position: center;
-    background-repeat: repeat-x;
-  }
 }
 
 @layer base {
@@ -211,9 +196,9 @@
 
   /* opacity-only 진입 — keyframe에 transform을 한 번이라도 두면 forwards 채움
      상태에서 identity matrix가 남아 fixed 자식의 containing block을 viewport에서
-     .phase-in으로 가로채요(모달/오버레이가 깨짐). transform을 빼면 .phase-in의
+     .screen-in으로 가로채요(모달/오버레이가 깨짐). transform을 빼면 .screen-in의
      computed transform이 none으로 유지돼 그 함정이 사라져요. */
-  @keyframes phase-in {
+  @keyframes screen-in {
     from { opacity: 0; }
     to   { opacity: 1; }
   }
@@ -226,22 +211,13 @@
     100% { top: 96%; opacity: 0; }
   }
 
-  /* Phase 배지 완료/활성 오버슈트 스프링 */
-  @keyframes badge-pop {
-    0%   { transform: scale(0.6); }
-    100% { transform: scale(1); }
-  }
-  .badge-pop {
-    animation: badge-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
-    .phase-in {
+    .screen-in {
       animation: none;
     }
   }
