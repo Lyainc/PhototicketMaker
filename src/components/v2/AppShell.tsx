@@ -4,35 +4,18 @@ import { AppHeader } from './AppHeader';
 interface AppShellProps {
   theme: 'light' | 'dark';
   onThemeChange: (theme: 'light' | 'dark') => void;
-  currentPhase: 1 | 2;
-  onPhaseClick?: (phase: 1 | 2) => void;
-  canAdvanceToPhase2?: boolean;
   rail?: ReactNode;
   children: ReactNode;
 }
 
-export function AppShell({
-  theme,
-  onThemeChange,
-  currentPhase,
-  onPhaseClick,
-  canAdvanceToPhase2,
-  rail,
-  children,
-}: AppShellProps) {
+export function AppShell({ theme, onThemeChange, rail, children }: AppShellProps) {
   return (
     <div
       data-theme={theme}
       className="app-canvas"
       style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}
     >
-      <AppHeader
-        theme={theme}
-        onThemeChange={onThemeChange}
-        currentPhase={currentPhase}
-        onPhaseClick={onPhaseClick}
-        canAdvanceToPhase2={canAdvanceToPhase2}
-      />
+      <AppHeader theme={theme} onThemeChange={onThemeChange} />
 
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 overflow-y-auto">

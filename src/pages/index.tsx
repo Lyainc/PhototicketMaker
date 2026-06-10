@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePhototicket } from '@/hooks/usePhototicket';
-import { usePhase } from '@/hooks/usePhase';
+import { useScreen } from '@/hooks/useScreen';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useMatchMedia } from '@/hooks/useMatchMedia';
 import { downloadTicketAsJpeg } from '@/utils/captureToImage';
 import { getLayout } from '@/utils/layouts';
 import { AppShell } from '@/components/v2/AppShell';
-import { Phase1Canvas } from '@/components/v2/Phase1Canvas';
-import { Phase2Canvas } from '@/components/v2/Phase2Canvas';
+import { EditorCanvas } from '@/components/v2/EditorCanvas';
+import { DoneCanvas } from '@/components/v2/DoneCanvas';
 import { PreviewFilmCell } from '@/components/v2/PreviewFilmCell';
 import { PrimaryCta } from '@/components/v2/PrimaryCta';
 import { RailReason } from '@/components/v2/RailReason';
@@ -16,6 +16,9 @@ import { PreviewLightbox } from '@/components/v2/PreviewLightbox';
 import TicketRenderer from '@/components/TicketRenderer';
 
 type CtaState = 'idle' | 'loading' | 'success' | 'disabled';
+
+// 모바일 에디터에서 고정 dock에 콘텐츠가 가리지 않게 하단 여백 확보 (렌더마다 새 객체 생성 방지)
+const DOCK_PADDING = { paddingBottom: 80 } as const;
 
 export default function Home() {
   // SSR safe: 초기값 'light', mount 후 localStorage/prefers-color-scheme 읽기
@@ -27,7 +30,7 @@ export default function Home() {
 
   const ticketRef = useRef<HTMLDivElement>(null);
   const photo = usePhototicket();
-  const phase = usePhase({ state: photo.state, pendingFetch });
+  const { screen, goTo, canExport } = useScreen({ state: photo.state, pendingFetch });
 
   const { croppedImageUrl } = photo.state;
   const { setRecommendedColors } = photo;
@@ -94,15 +97,21 @@ export default function Home() {
     }
   }, [photo.state.croppedImageUrl, photo.state.movieInfo.title, photo.state.components.layout]);
 
+  const railMessage = !croppedImageUrl
+    ? '포스터를 먼저 추가해주세요'
+    : !canExport
+      ? '제목 · 원제 · 개봉연도를 채워주세요'
+      : '티켓이 준비됐어요';
+
   // useMemo로 안정 참조 유지 — deps가 그대로면 동일 엘리먼트 참조라 React가 rail
   // 서브트리 재조정을 건너뛴다(theme·isMobile·lightbox 등 무관한 리렌더 시 스킵).
+  // 완료 화면은 캔버스가 프리뷰·액션을 직접 그리므로 rail은 에디터에서만 쓴다.
   const rail = useMemo(() => (
     <div className="flex flex-col gap-4">
       {/* 업로드 전에는 프리뷰 영역 자체를 렌더하지 않음 — 빈 티켓 틀이 보이지 않게 */}
       {croppedImageUrl && (
-        <PreviewFilmCell saving={ctaState === 'loading'}>
+        <PreviewFilmCell>
           <TicketRenderer
-            ref={ticketRef}
             croppedImageUrl={croppedImageUrl}
             movieInfo={debouncedMovieInfo}
             components={debouncedComponents}
@@ -111,56 +120,51 @@ export default function Home() {
         </PreviewFilmCell>
       )}
 
-      {phase.phase === 2 && (
-        <>
-          <RailReason
-            status={!croppedImageUrl ? 'warn' : 'ok'}
-            message={!croppedImageUrl ? '포스터를 먼저 추가해주세요' : '티켓이 준비됐어요'}
-          />
-          <PrimaryCta
-            state={ctaState}
-            label="JPEG 다운로드"
-            onClick={handleDownload}
-          />
-        </>
-      )}
+      <RailReason status={canExport ? 'ok' : 'warn'} message={railMessage} />
+      <PrimaryCta
+        state={canExport ? 'idle' : 'disabled'}
+        label="티켓 완성"
+        onClick={() => goTo('done')}
+      />
     </div>
-  ), [croppedImageUrl, ctaState, debouncedMovieInfo, debouncedComponents, photo.state.fieldVisibility, phase.phase, handleDownload]);
+  ), [croppedImageUrl, debouncedMovieInfo, debouncedComponents, photo.state.fieldVisibility, canExport, railMessage, goTo]);
 
   return (
     <>
       <AppShell
         theme={theme}
         onThemeChange={setTheme}
-        currentPhase={phase.phase}
-        onPhaseClick={(p) => {
-          if (p === 2 && phase.canAdvance(1)) phase.goTo(2);
-          if (p === 1) phase.goTo(1);
-        }}
-        canAdvanceToPhase2={phase.canAdvance(1)}
-        rail={rail}
+        rail={screen === 'editor' ? rail : undefined}
       >
-        <div style={isMobile ? { paddingBottom: 80 } : {}}>
-          <div key={phase.phase} className="phase-in">
-            {phase.phase === 1 ? (
-              <Phase1Canvas photo={photo} onPendingFetchChange={setPendingFetch} />
+        <div style={isMobile && screen === 'editor' ? DOCK_PADDING : undefined}>
+          <div key={screen} className="screen-in">
+            {screen === 'editor' ? (
+              <EditorCanvas photo={photo} onPendingFetchChange={setPendingFetch} />
             ) : (
-              <Phase2Canvas photo={photo} onGoBack={() => phase.goTo(1)} />
+              <DoneCanvas
+                croppedImageUrl={croppedImageUrl}
+                movieInfo={debouncedMovieInfo}
+                components={debouncedComponents}
+                fieldVisibility={photo.state.fieldVisibility}
+                ticketRef={ticketRef}
+                ctaState={ctaState}
+                onDownload={handleDownload}
+                onBack={() => goTo('editor')}
+              />
             )}
           </div>
         </div>
       </AppShell>
 
-      {isMobile && (
+      {isMobile && screen === 'editor' && (
         <MobileDock
-          ctaState={ctaState}
-          phase={phase.phase}
-          canAdvance={phase.canAdvance(1)}
+          ctaLabel="티켓 완성 →"
+          disabled={!canExport}
+          hint={canExport ? undefined : railMessage}
           hasImage={!!croppedImageUrl}
           previewThumb={croppedImageUrl ?? undefined}
           onPreviewClick={() => setLightboxOpen(true)}
-          onCtaClick={phase.phase === 1 ? () => phase.goTo(2) : handleDownload}
-          onGoBack={phase.phase === 2 ? () => phase.goTo(1) : undefined}
+          onCtaClick={() => goTo('done')}
         />
       )}
 

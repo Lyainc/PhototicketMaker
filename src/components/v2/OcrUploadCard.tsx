@@ -121,7 +121,7 @@ export function OcrUploadCard({
 
       if (result.chain && setComponents) {
         setComponents({ chainVisible: true });
-        showToast(`${result.chain.toUpperCase()} 체인을 인식했어요. 로고는 다음 단계에서 올려 주세요.`);
+        showToast(`${result.chain.toUpperCase()} 체인을 인식했어요. 로고는 아래 Theater에서 올려 주세요.`);
       }
 
       const direct: Partial<MovieInfo> = {};
@@ -177,12 +177,11 @@ export function OcrUploadCard({
         aria-busy={isProcessing}
         onClick={handleClick}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
-        className={`relative w-full rounded-card border-2 border-dashed overflow-hidden transition-colors
+        className={`relative h-full w-full rounded-card border-2 border-dashed overflow-hidden transition-colors
           ${isProcessing
             ? 'border-accent cursor-default'
             : 'border-line hover:border-accent cursor-pointer'
           }`}
-        style={{ paddingBottom: '150%' }}
       >
         {/* 필름 퍼포레이션 가장자리 — "티켓 스캔" 컨텍스트 */}
         <div
@@ -198,7 +197,7 @@ export function OcrUploadCard({
         {/* 진행 중 스캔라인 (prefers-reduced-motion: globals.css에서 자동 무효화) */}
         {isProcessing && <div className="ocr-scanline" aria-hidden="true" />}
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-3">
+        <div className="flex h-full min-h-[120px] flex-col items-center justify-center gap-3 px-3 py-5">
           {isProcessing ? (
             <div className="flex flex-col items-center gap-2">
               <span className="text-accent animate-pulse"><ScanIcon /></span>
