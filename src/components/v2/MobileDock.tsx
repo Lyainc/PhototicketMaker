@@ -24,6 +24,19 @@ export function MobileDock({
   const showThumb = hasImage && previewThumb;
   const dockRef = useRef<HTMLDivElement>(null);
 
+  // grabber에서 위로 스와이프하면 프리뷰를 연다(#117, 미니뷰어 풀업). 탭도 동일하게 연다.
+  const swipeStartY = useRef<number | null>(null);
+  const handleGrabTouchStart = (e: React.TouchEvent) => {
+    swipeStartY.current = e.touches[0]?.clientY ?? null;
+  };
+  const handleGrabTouchMove = (e: React.TouchEvent) => {
+    const y = e.touches[0]?.clientY;
+    if (swipeStartY.current != null && y != null && swipeStartY.current - y > 28) {
+      swipeStartY.current = null;
+      onPreviewClick?.();
+    }
+  };
+
   // dock의 실제 렌더 높이를 --mobile-dock-h로 노출(hint 유무로 높이가 달라짐).
   // 콘텐츠 여백(DOCK_PADDING)과 OCR 배너가 매직넘버 대신 이 값에 묶인다(#102/#97).
   // offsetHeight는 safe-area paddingBottom까지 포함하므로 따로 더하지 않는다.
@@ -57,6 +70,21 @@ export function MobileDock({
         background: 'var(--surface-translucent)',
       }}
     >
+      {hasImage && (
+        <button
+          type="button"
+          onClick={onPreviewClick}
+          onTouchStart={handleGrabTouchStart}
+          onTouchMove={handleGrabTouchMove}
+          aria-label="미리보기 열기"
+          className="flex w-full items-center justify-center pt-2 pb-0.5"
+        >
+          <span
+            aria-hidden="true"
+            style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--border-strong)' }}
+          />
+        </button>
+      )}
       {disabled && hint && (
         <p className="px-4 pt-2 text-[13px] leading-none text-fg-muted">{hint}</p>
       )}
