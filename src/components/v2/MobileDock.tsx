@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { Sprocket } from './Sprocket';
 
+// grabber(렌더 높이 약 20px) 위로 끌어올림으로 인정하는 최소 이동량. 단순 탭과 구분되게 잡았다.
+const GRAB_SWIPE_THRESHOLD_PX = 28;
+
 interface MobileDockProps {
   ctaLabel: string;
   disabled?: boolean;
@@ -31,7 +34,7 @@ export function MobileDock({
   };
   const handleGrabTouchMove = (e: React.TouchEvent) => {
     const y = e.touches[0]?.clientY;
-    if (swipeStartY.current != null && y != null && swipeStartY.current - y > 28) {
+    if (swipeStartY.current != null && y != null && swipeStartY.current - y > GRAB_SWIPE_THRESHOLD_PX) {
       swipeStartY.current = null;
       onPreviewClick?.();
     }

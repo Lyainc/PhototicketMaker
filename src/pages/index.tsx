@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { usePhototicket } from '@/hooks/usePhototicket';
 import { useExportReady } from '@/hooks/useExportReady';
 import { useResultView } from '@/hooks/useResultView';
@@ -13,8 +14,14 @@ import { PreviewFilmCell } from '@/components/v2/PreviewFilmCell';
 import { PrimaryCta } from '@/components/v2/PrimaryCta';
 import { RailReason } from '@/components/v2/RailReason';
 import { MobileDock } from '@/components/v2/MobileDock';
-import { PreviewSheet } from '@/components/v2/PreviewSheet';
 import TicketRenderer from '@/components/TicketRenderer';
+
+// vaul 기반 프리뷰 시트는 모바일 인터랙션 후에야 필요하고 rail(데스크톱)에선 안 쓰므로
+// 초기 번들에서 제외한다(vaul+radix). 포스터가 준비되면 preload해 첫 탭 지연을 없앤다(#117).
+const PreviewSheet = dynamic(
+  () => import('@/components/v2/PreviewSheet').then((m) => m.PreviewSheet),
+  { ssr: false },
+);
 
 // 모바일 에디터에서 고정 dock에 콘텐츠가 가리지 않게 하단 여백 확보. dock의 실제
 // 높이(--mobile-dock-h, MobileDock이 측정해 노출)에 묶어 매직넘버를 없앤다(#102).
@@ -74,6 +81,11 @@ export default function Home() {
       cancelled = true;
     };
   }, [croppedImageUrl, setRecommendedColors]);
+
+  // 포스터가 생기면 프리뷰 시트 청크를 미리 받아 dock 썸네일/grabber 첫 탭에 지연이 없게 한다(#117).
+  useEffect(() => {
+    if (croppedImageUrl) void import('@/components/v2/PreviewSheet');
+  }, [croppedImageUrl]);
 
   const railMessage = !croppedImageUrl
     ? '포스터를 먼저 추가해주세요'
