@@ -21,7 +21,6 @@ export function PreviewSheet({ open, onOpenChange, children }: PreviewSheetProps
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50 }}
         />
         <Drawer.Content
-          aria-label="티켓 미리보기"
           className="bg-surface"
           style={{
             position: 'fixed',
