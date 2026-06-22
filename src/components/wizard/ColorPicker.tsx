@@ -40,7 +40,7 @@ export default function ColorPicker({ value, onChange, recommended, disabled = f
       {disabled && disabledNote && (
         <p className="text-[12px] text-fg-muted">{disabledNote}</p>
       )}
-      <div className={`flex flex-wrap items-center gap-2.5 ${disabled ? 'opacity-40' : ''}`} aria-disabled={disabled || undefined}>
+      <div className={`flex flex-wrap items-center gap-2.5 ${disabled ? 'opacity-40' : ''}`}>
         {swatches.map((s) => {
           const active = s.value.toLowerCase() === lowerValue;
           return (
