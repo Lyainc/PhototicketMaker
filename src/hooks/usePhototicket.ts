@@ -112,17 +112,21 @@ export function usePhototicket() {
   }, []);
 
   const updateComponents = useCallback((components: Partial<TicketComponents>) => {
+    // posterOpacity가 직접 실려오면 슬라이더 조작이므로 touched로 기록한다. ref 뮤테이션은
+    // setState updater 밖에서 한다 — updater는 순수해야 하고(StrictMode 이중 호출), 이 갱신은
+    // prev에 의존하지 않으므로 바깥이 맞다(latestUrlRef 패턴과 동일).
+    if (components.posterOpacity !== undefined) {
+      brightnessTouchedRef.current = true;
+    }
     setState((prev) => {
       const nextComponents = { ...prev.components, ...components };
       latestChainUrlRef.current = nextComponents.chain.startsWith('blob:') ? nextComponents.chain : null;
       latestFormatUrlRef.current = nextComponents.format.startsWith('blob:') ? nextComponents.format : null;
 
-      // #146 확정 b: texture 전환 시 그 texture의 기본 밝기를 적용 — 단, 사용자가 슬라이더로
-      // 밝기를 직접 만진 적이 없을 때만(만진 뒤엔 그 값을 존중). posterOpacity가 이 업데이트에
-      // 직접 실려오면 슬라이더 조작이므로 touched로 기록한다.
-      if (components.posterOpacity !== undefined) {
-        brightnessTouchedRef.current = true;
-      } else if (
+      // #146 확정 b: texture 전환 시 그 texture의 기본 밝기를 적용 — 단, 슬라이더를 직접 만진
+      // 적이 없고(touched=false) posterOpacity가 이 업데이트에 실려오지 않았을 때만.
+      if (
+        components.posterOpacity === undefined &&
         components.texture !== undefined &&
         components.texture !== prev.components.texture &&
         !brightnessTouchedRef.current
