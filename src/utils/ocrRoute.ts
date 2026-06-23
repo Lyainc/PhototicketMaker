@@ -55,8 +55,7 @@ export function decodeAllowedImage(base64: string, mimeType: string): Uint8Array
 }
 
 /**
- * OCR 라우트 공통 가드. ocr.ts / ocr-boxes.ts가 스키마·프롬프트만 다르고 검증
- * 프리앰블이 동일하므로 한 곳으로 추출한다.
+ * OCR 라우트(api/ocr) 가드. 검증 프리앰블을 라우트 핸들러에서 분리해 둔다.
  *
  * 가드 순서: method → 입력(존재·MIME·크기) → rate limit → 인증.
  * 저렴한 검증을 먼저 두어 키 없이도 입력 거부가 동작하고, 남용은 모델 호출 전에 막는다.
