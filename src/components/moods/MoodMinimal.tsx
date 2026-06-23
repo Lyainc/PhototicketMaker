@@ -1,6 +1,7 @@
 import { CSSProperties } from 'react';
 import {
   Barcode,
+  BrandMark,
   ChainStamp,
   FONT_KR,
   FONT_MONO,
@@ -8,8 +9,9 @@ import {
   FormatStamp,
   MoodProps,
   Poster,
+  SignatureMark,
   gate,
-  isInkLight,
+  isInkDark,
   pickTitleSize,
   resolveTicketData,
   truncateActors,
@@ -37,17 +39,17 @@ const META_VALUE_BASE: CSSProperties = {
 
 export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVisibility: fv }: MoodProps) {
   const themeColor = components.themeColor || '#FFFFFF';
-  const isLight = isInkLight(themeColor);
-  const ink = isLight ? '#0d0c0a' : themeColor;
+  const inkIsDark = isInkDark(themeColor);
+  const ink = inkIsDark ? '#0d0c0a' : themeColor;
   const labelStyle: CSSProperties = { ...META_LABEL_BASE, color: ink };
   const valueStyle: CSSProperties = { ...META_VALUE_BASE, color: ink };
   const titleLen = d.title.length;
   const titleSize = pickTitleSize(titleLen, [96, 78, 62, 50]);
 
-  const scrimGrad = isLight
+  const scrimGrad = inkIsDark
     ? 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(245,240,232,0.85) 35%, rgba(245,240,232,0.98) 100%)'
     : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.65) 35%, rgba(0,0,0,0.92) 100%)';
-  const topPanelBg = isLight ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.55)';
+  const topPanelBg = inkIsDark ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.55)';
 
   const { bookingNo, watchDateClean, releaseClean, reissueClean } = resolveTicketData(d);
 
@@ -62,6 +64,7 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
   const runtimeVal     = gate(fv?.runtime, d.runtime);
   const releaseDateVal = gate(fv?.releaseDate, releaseClean);
   const reissueVal     = gate(fv?.reissue, reissueClean);
+  const signatureVal   = gate(fv?.signature, d.signature);
 
   return (
     <div
@@ -291,6 +294,31 @@ export function MoodMinimal({ movieInfo: d, components, croppedImageUrl, fieldVi
               <Barcode value={bookingNo} color={ink} width={180} height={34} textSize={10} />
             )}
           </div>
+        </div>
+
+        {/* Brand cue + signature footer — 양 끝으로 갈라 시각적으로 분리 */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            gap: 24,
+            marginTop: 30,
+          }}
+        >
+          <BrandMark color={ink} size={1.0} letterSpacing={6} opacity={0.82} />
+          {signatureVal && (
+            <SignatureMark
+              value={signatureVal}
+              color={ink}
+              label="SIGNED"
+              fontFamily={FONT_KR}
+              maxWidth={420}
+              align="right"
+              size={0.95}
+              opacity={0.8}
+            />
+          )}
         </div>
       </div>
     </div>

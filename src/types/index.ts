@@ -16,7 +16,8 @@ export type TicketField =
   | 'rating'
   | 'releaseDate'
   | 'reissue'
-  | 'bookingNo';
+  | 'bookingNo'
+  | 'signature';
 
 export interface MovieInfo {
   title: string;
@@ -39,6 +40,8 @@ export interface MovieInfo {
   rating: number;
   runtime?: string;
   bookingNumber?: string;
+  /** 유저 서명/닉네임 — 티켓에 공개로 표시되는 개인 사인(#148). */
+  signature?: string;
 }
 
 export interface TicketComponents {

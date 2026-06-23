@@ -1,6 +1,7 @@
 import { CSSProperties } from 'react';
 import {
   Barcode,
+  BrandMark,
   ChainStamp,
   FONT_KR,
   FONT_MONO,
@@ -9,6 +10,7 @@ import {
   HorizontalSprockets,
   MoodProps,
   Poster,
+  SignatureMark,
   gate,
   pickTitleSize,
   resolveTicketData,
@@ -64,6 +66,7 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl, fieldVisib
   const releaseDateVal = gate(fv?.releaseDate, releaseClean);
   const reissueVal = gate(fv?.reissue, reissueClean);
   const actorsVal = truncateActors(gate(fv?.actors, d.actors));
+  const signatureVal = gate(fv?.signature, d.signature);
 
   const exhibitedText = [theaterVal, screenVal, seatVal].filter(Boolean).join(' · ');
   const screenedText = [watchDateVal, watchTimeVal].filter(Boolean).join(' · ');
@@ -285,6 +288,33 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl, fieldVisib
             </div>
             {(fv?.bookingNo ?? true) && (
               <Barcode value={bookingNo} color={FS_INK} width={180} height={28} textSize={10} />
+            )}
+          </div>
+
+          {/* Brand cue + signature — 필름 엣지 프린트 톤(mono), 양 끝 분리 */}
+          <div
+            style={{
+              marginTop: 14,
+              paddingTop: 12,
+              borderTop: `1px dashed ${FS_DIVIDER}`,
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              gap: 16,
+            }}
+          >
+            <BrandMark color={FS_INK} size={0.92} letterSpacing={5} opacity={0.85} />
+            {signatureVal && (
+              <SignatureMark
+                value={signatureVal}
+                color={FS_INK}
+                label="SIGNED"
+                fontFamily={FONT_MONO}
+                maxWidth={360}
+                align="right"
+                size={0.82}
+                opacity={0.85}
+              />
             )}
           </div>
         </div>

@@ -1,5 +1,6 @@
 import {
   Barcode,
+  BrandMark,
   ChainStamp,
   FONT_KR,
   FONT_MONO,
@@ -7,8 +8,9 @@ import {
   FormatStamp,
   MoodProps,
   Poster,
+  SignatureMark,
   gate,
-  isInkLight,
+  isInkDark,
   pickTitleSize,
   resolveTicketData,
   truncateActors,
@@ -16,16 +18,16 @@ import {
 
 export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, fieldVisibility: fv }: MoodProps) {
   const themeColor = components.themeColor || '#FFFFFF';
-  const isLight = isInkLight(themeColor);
-  const ink = isLight ? '#0d0c0a' : themeColor;
+  const inkIsDark = isInkDark(themeColor);
+  const ink = inkIsDark ? '#0d0c0a' : themeColor;
   const titleLen = d.title.length;
   const titleSize = pickTitleSize(titleLen, [104, 84, 64, 50]);
 
-  const globalScrim = isLight
+  const globalScrim = inkIsDark
     ? 'linear-gradient(180deg, rgba(245,240,232,0.7) 0%, rgba(245,240,232,0.35) 30%, rgba(245,240,232,0.5) 60%, rgba(245,240,232,0.95) 100%)'
     : 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.92) 100%)';
-  const spineBg = isLight ? 'rgba(245,240,232,0.95)' : 'rgba(0,0,0,0.7)';
-  const spineDivider = isLight ? '#0d0c0a' : ink;
+  const spineBg = inkIsDark ? 'rgba(245,240,232,0.95)' : 'rgba(0,0,0,0.7)';
+  const spineDivider = inkIsDark ? '#0d0c0a' : ink;
 
   const { bookingNo, watchDateClean, releaseClean, reissueClean, watchYear } = resolveTicketData(d);
   const bookingTail = bookingNo.split('-').pop() || '0000';
@@ -39,6 +41,7 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
   const seatVal        = gate(fv?.seat, d.seat);
   const releaseDateVal = gate(fv?.releaseDate, releaseClean);
   const reissueVal     = gate(fv?.reissue, reissueClean);
+  const signatureVal   = gate(fv?.signature, d.signature);
 
   return (
     <div
@@ -93,19 +96,9 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
         >
           PHOTOTICKET{(fv?.bookingNo ?? true) ? ` · No.${bookingTail}` : ''}
         </div>
-        <div
-          style={{
-            marginTop: 14,
-            fontWeight: 500,
-            fontSize: 9,
-            fontFamily: FONT_MONO,
-            letterSpacing: 2,
-            opacity: 0.5,
-            writingMode: 'vertical-rl',
-            transform: 'rotate(180deg)',
-          }}
-        >
-          Made by FILME
+        {/* 브랜드 cue — 스파인 세로 워드마크(#138 T1). 기존 'Made by FILME' 텍스트를 공통 BrandMark로 표준화. */}
+        <div style={{ marginTop: 16 }}>
+          <BrandMark orientation="vertical" color={ink} size={0.95} letterSpacing={4} opacity={0.6} />
         </div>
         <div style={{ flex: 1 }} />
         {(fv?.bookingNo ?? true) && (
@@ -271,6 +264,20 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
             .filter(Boolean)
             .join('  ·  ')}
         </div>
+        {signatureVal && (
+          <div style={{ marginTop: 20 }}>
+            <SignatureMark
+              value={signatureVal}
+              color={ink}
+              label="SIGNED"
+              fontFamily={FONT_KR}
+              italic
+              maxWidth={520}
+              size={0.95}
+              opacity={0.85}
+            />
+          </div>
+        )}
       </div>
 
       {/* Pt monogram top-left */}

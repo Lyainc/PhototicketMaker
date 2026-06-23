@@ -147,6 +147,127 @@ export function FormatStamp({
   );
 }
 
+interface BrandMarkProps {
+  /** 워드마크 색 — 무드 잉크색을 그대로 넘긴다. */
+  color?: string;
+  /** 스케일 배율(1 = 기본 14px). */
+  size?: number;
+  orientation?: 'horizontal' | 'vertical';
+  opacity?: number;
+  letterSpacing?: number;
+}
+
+/**
+ * 브랜드 cue "FILME" 워드마크(#138 T1). 4무드 공통 푸터에 들어가며 캡처에 포함된다
+ * (data-hide-on-export 금지). 도메인이 아닌 순수 "FILME". 색·크기·방향만 무드별로 조정.
+ */
+export function BrandMark({
+  color = 'currentColor',
+  size = 1,
+  orientation = 'horizontal',
+  opacity = 0.9,
+  letterSpacing = 4,
+}: BrandMarkProps) {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        fontWeight: 800,
+        fontSize: 14 * size,
+        fontFamily: FONT_SANS,
+        letterSpacing: letterSpacing * size,
+        textTransform: 'uppercase',
+        color,
+        opacity,
+        whiteSpace: 'nowrap',
+        ...(orientation === 'vertical'
+          ? { writingMode: 'vertical-rl', transform: 'rotate(180deg)' }
+          : {}),
+      }}
+    >
+      FILME
+    </span>
+  );
+}
+
+interface SignatureMarkProps {
+  value: string;
+  color?: string;
+  size?: number;
+  /** 위에 붙는 작은 mono 라벨(예: SIGNED). 생략 시 라벨 없이 서명만. */
+  label?: string;
+  fontFamily?: string;
+  italic?: boolean;
+  opacity?: number;
+  /** 말줄임 기준 폭. 길이 제한을 넘겨도 ellipsis로 잘린다. */
+  maxWidth?: number;
+  align?: 'left' | 'right';
+}
+
+/**
+ * 유저 서명/닉네임 슬롯(#148). value가 비면 아무것도 렌더하지 않아 빈 자리를 안 남긴다.
+ * 한 줄 + ellipsis(폼의 maxLength와 이중 안전장치). 브랜드 cue와 시각적으로 분리해 배치할 것.
+ */
+export function SignatureMark({
+  value,
+  color = 'currentColor',
+  size = 1,
+  label,
+  fontFamily = FONT_KR,
+  italic = false,
+  opacity = 0.9,
+  maxWidth = 360,
+  align = 'left',
+}: SignatureMarkProps) {
+  if (!value) return null;
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        flexDirection: 'column',
+        alignItems: align === 'right' ? 'flex-end' : 'flex-start',
+        maxWidth,
+        minWidth: 0,
+        opacity,
+        color,
+      }}
+    >
+      {label && (
+        <span
+          style={{
+            fontWeight: 700,
+            fontSize: 9 * size,
+            fontFamily: FONT_MONO,
+            letterSpacing: 2 * size,
+            textTransform: 'uppercase',
+            opacity: 0.6,
+            marginBottom: 3,
+          }}
+        >
+          {label}
+        </span>
+      )}
+      <span
+        style={{
+          fontWeight: 500,
+          fontStyle: italic ? 'italic' : 'normal',
+          fontSize: 19 * size,
+          fontFamily,
+          letterSpacing: 0.2,
+          lineHeight: 1.15,
+          maxWidth: '100%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          textAlign: align,
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 interface PosterProps {
   src: string;
   fit?: 'cover' | 'contain';
@@ -163,20 +284,31 @@ const TEXTURE_FILTERS: Record<string, string> = {
   newspaper: 'grayscale(1) contrast(1.5) brightness(1.2)',
 };
 
+// texture별 기본 밝기(#146 확정 b). original/vintage/newspaper는 포스터를 그대로 보여주는
+// 룩이라 1.0(원본 밝기), 그 외 가공 텍스처(none·hologram·metal·artpaper·scodix)는 메타
+// 가독성을 위해 0.5로 살짝 어둡게 깐다. 사용자가 슬라이더로 직접 조정한 값이 있으면
+// usePhototicket이 그 값을 그대로 넘기므로, 이 기본값은 posterOpacity 미지정 시에만 쓰인다.
+const FULL_BRIGHTNESS_TEXTURES = new Set(['original', 'vintage', 'newspaper']);
+
+export function defaultBrightnessForTexture(texture: string): number {
+  return FULL_BRIGHTNESS_TEXTURES.has(texture) ? 1.0 : 0.5;
+}
+
 export function Poster({
   src,
   fit = 'cover',
   background = '#0a0a0a',
   texture = 'original',
-  posterOpacity = 0.5,
+  posterOpacity,
 }: PosterProps) {
   // 밝기(posterOpacity)를 texture와 분리해 포스터 <img>에 직접 합성한다. 이전엔
   // TextureOverlay의 검은 dim 레이어에서만 적용돼 original/vintage/newspaper에선
   // 밝기 슬라이더가 완전히 무효였다(#139 ①). brightness(x)는 검은색을 multiply로
   // opacity (1-x)만큼 덮은 것과 수학적으로 동치라(final = src*x), 텍스처 dim 룩이
   // 그대로 유지되면서 모든 texture에서 밝기가 동작한다.
+  const opacity = posterOpacity ?? defaultBrightnessForTexture(texture);
   const baseFilter = TEXTURE_FILTERS[texture] ?? PRINT_SIM;
-  const filter = `${baseFilter} brightness(${posterOpacity})`;
+  const filter = `${baseFilter} brightness(${opacity})`;
 
   return (
     <div
@@ -529,7 +661,12 @@ export function luminance(hex: string): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-export function isInkLight(themeColor: string): boolean {
+/**
+ * 선택된 잉크(themeColor)가 어두운지 판정한다(luminance < 0.18).
+ * true면 무드는 어두운 잉크가 읽히도록 밝은(크림) 표면 톤으로 스냅한다.
+ * (이전 이름 `isInkLight`는 실제 반환 의미와 반대라 #147에서 바로잡음.)
+ */
+export function isInkDark(themeColor: string): boolean {
   return luminance(themeColor) < 0.18;
 }
 
