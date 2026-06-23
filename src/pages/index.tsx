@@ -44,8 +44,15 @@ export default function Home() {
 
   const { croppedImageUrl } = photo.state;
   const { setRecommendedColors } = photo;
-  const debouncedMovieInfo = useDebounce(photo.state.movieInfo, 280);
-  const debouncedComponents = useDebounce(photo.state.components, 280);
+  // movieInfo·components를 한 객체로 묶어 한 번만 디바운스 — 독립 타이머 2개가 각자
+  // settle하며 프리뷰를 두 번 리렌더하거나 280ms desync 윈도우를 만드는 걸 막는다(#153 ②).
+  // useMemo로 묶어 두 값이 그대로면 같은 참조 → useDebounce가 불필요한 타이머 재시작을 안 한다.
+  const draft = useMemo(
+    () => ({ movieInfo: photo.state.movieInfo, components: photo.state.components }),
+    [photo.state.movieInfo, photo.state.components],
+  );
+  const debounced = useDebounce(draft, 280);
+  const { movieInfo: debouncedMovieInfo, components: debouncedComponents } = debounced;
   const { fieldVisibility } = photo.state;
 
   // FOUC 스크립트(_document.tsx)가 이미 적용한 클래스를 신뢰
