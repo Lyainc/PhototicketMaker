@@ -44,12 +44,13 @@ const FIELD_LABELS: Record<TicketField, string> = {
   releaseDate: '개봉일',
   reissue: '재개봉',
   bookingNo: '예매 번호',
+  signature: '서명',
 };
 
 const FIELD_ORDER: TicketField[] = [
   'title', 'titleOg', 'actors', 'watchDate', 'watchTime',
   'theater', 'screen', 'seat', 'runtime', 'rating',
-  'releaseDate', 'reissue', 'bookingNo',
+  'releaseDate', 'reissue', 'bookingNo', 'signature',
 ];
 
 function OcrChip() {

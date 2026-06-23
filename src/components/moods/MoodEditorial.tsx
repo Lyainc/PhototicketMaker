@@ -1,5 +1,6 @@
 import {
   Barcode,
+  BrandMark,
   ChainStamp,
   FONT_KR,
   FONT_MONO,
@@ -8,6 +9,7 @@ import {
   MoodProps,
   PerforationStrip,
   Poster,
+  SignatureMark,
   gate,
   pickTitleSize,
   resolveTicketData,
@@ -35,6 +37,7 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl, field
   const sessionValue = gate(fv?.watchDate, watchDateClean) || gate(fv?.watchTime, d.watchTime);
   const sessionSub = gate(fv?.watchDate, watchDateClean) ? gate(fv?.watchTime, d.watchTime) : '';
   const actorsVal = truncateActors(gate(fv?.actors, d.actors));
+  const signatureVal = gate(fv?.signature, d.signature);
 
   return (
     <div
@@ -244,6 +247,49 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl, field
           )}
         </div>
 
+        {/* Signature — 프랑스풍 'par {서명}' 라인. 브랜드 cue(스텁 FILME)와 시각적으로 분리. */}
+        {signatureVal && (
+          <div
+            style={{
+              paddingTop: 16,
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'flex-end',
+              gap: 10,
+              minWidth: 0,
+            }}
+          >
+            <span
+              style={{
+                fontStyle: 'italic',
+                fontWeight: 500,
+                fontSize: 15,
+                fontFamily: FONT_SANS,
+                color: accent,
+                letterSpacing: 0.3,
+                flexShrink: 0,
+              }}
+            >
+              par
+            </span>
+            <span
+              style={{
+                fontWeight: 500,
+                fontSize: 22,
+                fontFamily: FONT_KR,
+                color: PAPER_DEEP,
+                letterSpacing: -0.2,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 460,
+              }}
+            >
+              {signatureVal}
+            </span>
+          </div>
+        )}
+
         {/* Footer */}
         <div
           style={{
@@ -402,6 +448,8 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl, field
             marginTop: 16,
           }}
         >
+          {/* 브랜드 cue — 스텁 하단 워드마크(#138 T1) */}
+          <BrandMark color={PAPER_DEEP} size={0.9} letterSpacing={4} opacity={0.9} />
           <div
             style={{
               fontWeight: 700,

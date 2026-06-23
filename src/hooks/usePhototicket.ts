@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { PhototicketState, MovieInfo, TicketComponents, TicketField } from '@/types';
+import { defaultBrightnessForTexture } from '@/components/moods/_shared';
 
 export const ALL_FIELDS_ON: Record<TicketField, boolean> = {
   title: true,
@@ -15,6 +16,7 @@ export const ALL_FIELDS_ON: Record<TicketField, boolean> = {
   releaseDate: true,
   reissue: true,
   bookingNo: true,
+  signature: true,
 };
 
 const DEFAULT_VISIBILITY_ON_UPLOAD: Record<TicketField, boolean> = {
@@ -31,6 +33,7 @@ const DEFAULT_VISIBILITY_ON_UPLOAD: Record<TicketField, boolean> = {
   releaseDate: false,
   reissue: false,
   bookingNo: false,
+  signature: false,
 };
 
 const INITIAL_STATE: PhototicketState = {
@@ -52,6 +55,7 @@ const INITIAL_STATE: PhototicketState = {
     rating: 5.0,
     runtime: '',
     bookingNumber: '',
+    signature: '',
   },
   components: {
     layout: 'minimal',
@@ -75,6 +79,9 @@ export function usePhototicket() {
   // 상태 소유자(hook)가 마지막 blob URL을 추적한다 (latestUrlRef와 동일 패턴).
   const latestChainUrlRef = useRef<string | null>(null);
   const latestFormatUrlRef = useRef<string | null>(null);
+  // 사용자가 밝기 슬라이더를 직접 만졌는지 추적(#146). 한번 만지면 이후 texture 전환에서
+  // 기본 밝기를 덮어쓰지 않고 사용자 값을 존중한다.
+  const brightnessTouchedRef = useRef(false);
 
   const handleImageUpload = useCallback((croppedUrl: string) => {
     setState((prev) => {
@@ -105,6 +112,20 @@ export function usePhototicket() {
       const nextComponents = { ...prev.components, ...components };
       latestChainUrlRef.current = nextComponents.chain.startsWith('blob:') ? nextComponents.chain : null;
       latestFormatUrlRef.current = nextComponents.format.startsWith('blob:') ? nextComponents.format : null;
+
+      // #146 확정 b: texture 전환 시 그 texture의 기본 밝기를 적용 — 단, 사용자가 슬라이더로
+      // 밝기를 직접 만진 적이 없을 때만(만진 뒤엔 그 값을 존중). posterOpacity가 이 업데이트에
+      // 직접 실려오면 슬라이더 조작이므로 touched로 기록한다.
+      if (components.posterOpacity !== undefined) {
+        brightnessTouchedRef.current = true;
+      } else if (
+        components.texture !== undefined &&
+        components.texture !== prev.components.texture &&
+        !brightnessTouchedRef.current
+      ) {
+        nextComponents.posterOpacity = defaultBrightnessForTexture(components.texture);
+      }
+
       return { ...prev, components: nextComponents };
     });
   }, []);

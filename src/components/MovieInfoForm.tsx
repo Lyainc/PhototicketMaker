@@ -343,6 +343,30 @@ export default function MovieInfoForm({
         onToggle={(isReissue) => onChange({ isReissue })}
         onDateChange={(reissueDate) => onChange({ reissueDate })}
       />
+
+      <Field
+        id="signature"
+        label="Signature"
+        optional
+        labelAccessory={
+          <>
+            <VisibilityCheckbox
+              checked={fieldVisibility.signature}
+              onChange={(v) => onFieldVisibilityChange({ signature: v })}
+              label="서명"
+            />
+            <InfoTooltip
+              text="닉네임이나 한마디를 남겨보세요. 입력한 서명은 티켓에 그대로 공개로 표시돼요."
+              label="서명 도움말"
+            />
+          </>
+        }
+        value={movieInfo.signature || ''}
+        dimmed={!fieldVisibility.signature}
+        onChange={(e) => onChange({ signature: e.target.value })}
+        placeholder="@minji · 티켓에 공개돼요"
+        maxLength={20}
+      />
     </section>
   );
 }
