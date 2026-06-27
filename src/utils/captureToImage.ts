@@ -69,17 +69,17 @@ async function decodeImage(img: HTMLImageElement): Promise<void> {
   }
 }
 
-async function waitForImagesLoaded(node: HTMLElement): Promise<void> {
-  const images = Array.from(node.querySelectorAll('img'));
-  await Promise.all(images.map((img) => decodeImage(img)));
-}
-
 // html-to-image의 첫 캡처는 콜드 상태에서 노드를 복제·임베드(이미지 인라인·폰트 해석)하는데,
 // 그 임베드가 끝나기 전에 결과를 내면 포스터가 빠질 수 있다(#138 항목3 — 미재현이나 위험 경로).
-// decodeImage가 원본 <img> 디코드는 보장하지만 복제본 렌더 콜드 미스까지는 못 막아, 세션
-// 첫 캡처에 한해 버리는 워밍업 캡처를 한 번 돌려 경로를 덥힌다. 사용자가 보통 다운로드를
-// 먼저 누르는 순서 의존성("다운로드는 빠지고 공유는 멀쩡")을 첫 시도부터 깬다.
-let hasWarmedCapture = false;
+// decodeImage가 원본 <img> 디코드는 보장하지만 복제본 렌더 콜드 미스까지는 못 막아, 버리는
+// 워밍업 캡처를 한 번 돌려 경로를 덥힌다.
+//
+// 워밍업은 "노드의 현재 이미지 src 집합"별로 한 번 돈다 — 세션당 한 번이 아니다. html-to-image의
+// 이미지 인라인 캐시는 URL 키 기반이라, 사용자가 포스터·로고를 바꾸면 새 blob URL은 캐시에 없어
+// 그다음 캡처(다운로드든 공유든)가 콜드로 떨어진다. 세션 전역 플래그는 첫 포스터만 덥히고 교체
+// 이후를 못 막아, 어느 액션을 먼저 누르냐에 따라 포스터가 빠진다(#175: 다운로드 정상·공유 누락,
+// #138의 거울 케이스). src 시그니처별로 덥혀 이 순서 의존성을 콘텐츠가 바뀔 때마다 다시 깬다.
+const warmedSignatures = new Set<string>();
 
 export async function captureNodeToJpeg(
   node: HTMLElement,
@@ -90,23 +90,24 @@ export async function captureNodeToJpeg(
   if (typeof document !== 'undefined' && document.fonts?.ready) {
     await document.fonts.ready;
   }
-  await waitForImagesLoaded(node);
+  const images = Array.from(node.querySelectorAll('img'));
+  await Promise.all(images.map((img) => decodeImage(img)));
 
   const { toJpeg } = await import('html-to-image');
   const jpegOptions = buildJpegOptions(width, height, quality, pixelRatio);
 
-  // 세션 첫 캡처만 워밍업한다 — 매 캡처 두 번 돌리면 비용이 배가 되므로. 결과는 버리고
-  // 캐시만 덥히며, 워밍업 실패는 본 캡처가 진짜 결과/에러를 내도록 삼킨다(다운로드·공유 공통 경로).
-  // 워밍업은 pixelRatio:1로 돈다 — html-to-image의 폰트 임베드·이미지 인라인 캐시는 URL 키
-  // 기반이라 캔버스 해상도와 무관하니 같은 경로를 덥히면서, pixelRatio:2의 ~1/4 메모리만 쓴다.
-  // (전체 해상도 워밍업은 iOS Safari per-tab GPU 버젯에서 OOM날 수 있고, 그 실패가 삼켜지면
-  // 본 캡처가 콜드로 떨어져 이 워밍업이 막으려던 시나리오가 그대로 재현된다.)
-  if (!hasWarmedCapture) {
-    hasWarmedCapture = true;
+  // 현재 이미지 집합을 덥힌 적 없으면 워밍업한다(이미지 없는 노드는 덥힐 게 없어 건너뜀).
+  // 결과는 버리고 캐시만 덥힌다. 워밍업은 pixelRatio:1로 돈다 — 임베드 캐시는 URL 키 기반이라
+  // 캔버스 해상도와 무관하니 같은 경로를 덥히면서 pixelRatio:2의 ~1/4 메모리만 쓴다. (전체 해상도
+  // 워밍업은 iOS Safari per-tab GPU 버젯에서 OOM날 수 있다.) 워밍업 실패는 시그니처에서 도로
+  // 빼 다음 캡처가 재시도하게 하고, 본 캡처가 진짜 결과/에러를 내도록 삼킨다.
+  const signature = images.map((img) => img.src).join('|');
+  if (images.length > 0 && !warmedSignatures.has(signature)) {
+    warmedSignatures.add(signature);
     try {
       await toJpeg(node, buildJpegOptions(width, height, quality, 1));
     } catch {
-      // 워밍업 실패는 무시 — 아래 본 캡처가 그대로 다시 시도하고, 실패하면 그쪽이 throw한다.
+      warmedSignatures.delete(signature);
     }
   }
 
