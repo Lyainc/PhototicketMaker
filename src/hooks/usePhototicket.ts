@@ -98,6 +98,15 @@ export function usePhototicket() {
   useEffect(() => {
     const saved = loadPersisted();
     if (!saved) return;
+    // 저장된 밝기가 기본값과 다르면 사용자가 만진 값이므로 touched로 표시한다 — 안 그러면
+    // brightnessTouchedRef(false)가 복원 직후 첫 texture 전환에서 그 texture 기본 밝기로
+    // 저장된 값을 덮어쓴다(#178 리뷰 P1). ref라 영속화엔 안 들어가 복원 시 따로 복구.
+    if (
+      saved.components?.posterOpacity !== undefined &&
+      saved.components.posterOpacity !== INITIAL_STATE.components.posterOpacity
+    ) {
+      brightnessTouchedRef.current = true;
+    }
     setState((prev) => ({
       ...prev,
       movieInfo: { ...prev.movieInfo, ...(saved.movieInfo ?? {}) },
