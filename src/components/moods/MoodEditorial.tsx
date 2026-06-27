@@ -12,6 +12,7 @@ import {
   SignatureMark,
   gate,
   pickTitleSize,
+  resolveInk,
   resolveTicketData,
   truncateActors,
 } from './_shared';
@@ -29,7 +30,9 @@ const STUB_W = 212;
 
 export function MoodEditorial({ movieInfo: d, components, croppedImageUrl, fieldVisibility: fv }: MoodProps) {
   const themeColor = components.themeColor || '#FFFFFF';
-  const accent = themeColor.toLowerCase() === '#ffffff' ? '#a8312a' : themeColor;
+  // 흰색은 의도적으로 빨강 accent로, 그 외는 themeColor — 단 불완전 hex(타이핑 중 '#8E')는
+  // resolveInk로 빨강 fallback해 무효 CSS color로 텍스트가 묻히는 걸 막는다(#177 리뷰 P1).
+  const accent = themeColor.toLowerCase() === '#ffffff' ? '#a8312a' : resolveInk(themeColor, '#a8312a');
   const titleSize = pickTitleSize(d.title.length, [112, 94, 76, 56]);
   const { bookingNo, watchDateClean, releaseClean, reissueClean, watchYear } = resolveTicketData(d);
   // gate는 순수 함수 — 필드당 1회만 호출해 상단에서 파생 (Minimal/Criterion/35mm 패턴 정렬)
