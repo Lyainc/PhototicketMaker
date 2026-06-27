@@ -3,14 +3,20 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 // html-to-image의 toJpeg 호출 수를 세 워밍업(버리는 캡처)이 콘텐츠별로 도는지 검증한다.
 // mock.module은 hoisting 안 됨 — 등록 후 require로 SUT를 가져와야 가로채진다(CLAUDE.md).
 let calls: Array<{ pixelRatio: number }> = [];
+// 워밍업(pixelRatio:1) 한 번만 실패시켜 재시도 경로를 검증할 때 켠다.
+let failWarmupOnce = false;
 mock.module('html-to-image', () => ({
   toJpeg: (_node: unknown, opts: { pixelRatio: number }) => {
     calls.push({ pixelRatio: opts.pixelRatio });
+    if (failWarmupOnce && opts.pixelRatio === 1) {
+      failWarmupOnce = false;
+      return Promise.reject(new Error('warmup boom'));
+    }
     return Promise.resolve('data:image/jpeg;base64,AAAA');
   },
 }));
 
-const { captureNodeToJpeg } = require('../src/utils/captureToImage');
+const { captureNodeToJpeg, __resetWarmupCacheForTest } = require('../src/utils/captureToImage');
 
 // happy-dom img는 decode() 미구현이라 decodeImage가 load 이벤트를 기다리며 멎을 수 있다.
 // 즉시 resolve하는 decode를 심어 캡처 로직만 격리해 검증한다.
@@ -31,6 +37,9 @@ const OPTS = { filename: 't.jpg', width: 960, height: 1477 };
 describe('#175 캡처 워밍업 — 콘텐츠(이미지 src)별로 덥힌다', () => {
   beforeEach(() => {
     calls = [];
+    failWarmupOnce = false;
+    // 모듈 레벨 워밍업 캐시를 비워 테스트 격리를 명시한다(고유 URL에 암묵 의존하지 않게, #175 리뷰).
+    __resetWarmupCacheForTest();
   });
 
   test('새 포스터의 첫 캡처는 워밍업(ratio 1) + 본 캡처(ratio 2)', async () => {
@@ -55,5 +64,16 @@ describe('#175 캡처 워밍업 — 콘텐츠(이미지 src)별로 덥힌다', (
   test('이미지 없는 노드는 워밍업 없이 본 캡처만', async () => {
     await captureNodeToJpeg(document.createElement('div'), OPTS);
     expect(calls.map((c) => c.pixelRatio)).toEqual([2]);
+  });
+
+  test('워밍업이 실패하면 시그니처를 비워 다음 캡처가 다시 워밍업한다', async () => {
+    failWarmupOnce = true;
+    // 1차: 워밍업(ratio 1) reject → catch에서 시그니처 delete → 본 캡처(ratio 2)는 정상.
+    await captureNodeToJpeg(nodeWithPoster('blob:retry'), OPTS);
+    expect(calls.map((c) => c.pixelRatio)).toEqual([1, 2]);
+    calls = [];
+    // 2차: 시그니처가 비워졌으므로 같은 src도 다시 워밍업한다(실패가 영구 콜드로 굳지 않음).
+    await captureNodeToJpeg(nodeWithPoster('blob:retry'), OPTS);
+    expect(calls.map((c) => c.pixelRatio)).toEqual([1, 2]);
   });
 });

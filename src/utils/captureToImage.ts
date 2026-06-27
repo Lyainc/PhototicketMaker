@@ -81,6 +81,12 @@ async function decodeImage(img: HTMLImageElement): Promise<void> {
 // #138의 거울 케이스). src 시그니처별로 덥혀 이 순서 의존성을 콘텐츠가 바뀔 때마다 다시 깬다.
 const warmedSignatures = new Set<string>();
 
+// 테스트 전용 — 모듈 레벨 워밍업 캐시를 비워 테스트 간 격리를 명시한다(#175 리뷰). 프로덕션 경로엔
+// 호출자가 없다.
+export function __resetWarmupCacheForTest(): void {
+  warmedSignatures.clear();
+}
+
 export async function captureNodeToJpeg(
   node: HTMLElement,
   options: CaptureOptions
