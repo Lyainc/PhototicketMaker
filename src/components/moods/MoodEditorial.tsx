@@ -121,20 +121,36 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl, field
             )}
             <FormatStamp format={components.format} label={components.formatLabel} visible={components.formatVisible} size={1.2} />
           </div>
-          {runtimeVal && (
-            <div
-              style={{
-                fontWeight: 600,
-                fontSize: 13,
-                fontFamily: FONT_MONO,
-                letterSpacing: 3,
-                color: PAPER_DIM,
-                textTransform: 'uppercase',
-              }}
-            >
-              {runtimeVal}
-            </div>
-          )}
+          {/* runtime + 별점을 헤더 우측 flow로 합침 — 절대배치 별점과 runtime이 같은 좌표라 겹치던 문제 해소(#183) */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+            {runtimeVal && (
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 13,
+                  fontFamily: FONT_MONO,
+                  letterSpacing: 3,
+                  color: PAPER_DIM,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {runtimeVal}
+              </div>
+            )}
+            {(fv?.rating ?? true) && d.rating > 0 && (
+              <div
+                style={{
+                  fontWeight: 800,
+                  fontSize: 16,
+                  fontFamily: FONT_MONO,
+                  letterSpacing: 1,
+                  color: accent,
+                }}
+              >
+                ★ {d.rating.toFixed(1)}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Subtitle label */}
@@ -363,24 +379,6 @@ export function MoodEditorial({ movieInfo: d, components, croppedImageUrl, field
           )}
         </div>
 
-        {/* Rating — absolute top-right */}
-        {(fv?.rating ?? true) && d.rating > 0 && (
-          <div
-            style={{
-              position: 'absolute',
-              right: 48,
-              top: 44,
-              fontWeight: 800,
-              fontSize: 16,
-              fontFamily: FONT_MONO,
-              letterSpacing: 1,
-              color: accent,
-            }}
-          >
-            ★ {d.rating.toFixed(1)}
-          </div>
-        )}
-
         {/* Notch (DD5): #000 circle at Main/Stub boundary — matches captureToImage backgroundColor:'#000000' */}
         <div
           style={{
@@ -510,7 +508,7 @@ function MetaCell({
         style={{
           fontStyle: 'italic',
           fontWeight: 500,
-          fontSize: 16,
+          fontSize: 17,
           fontFamily: FONT_SANS,
           color: PAPER_DIM,
           letterSpacing: 0.3,
@@ -522,7 +520,7 @@ function MetaCell({
       <div
         style={{
           fontWeight: 800,
-          fontSize: 30,
+          fontSize: 32,
           fontFamily: mono ? FONT_MONO : FONT_SANS,
           letterSpacing: mono ? 0.5 : -0.4,
           lineHeight: 1.05,
@@ -536,7 +534,7 @@ function MetaCell({
           style={{
             marginTop: 3,
             fontWeight: 600,
-            fontSize: 15,
+            fontSize: 16,
             fontFamily: FONT_MONO,
             letterSpacing: 1.5,
             color: PAPER_DIM,

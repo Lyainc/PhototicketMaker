@@ -27,7 +27,7 @@ const FS_DIVIDER = 'rgba(244,237,224,0.32)';
 const cellLabelStyle: CSSProperties = {
   color: FS_DIM,
   fontWeight: 700,
-  fontSize: 11,
+  fontSize: 12,
   fontFamily: FONT_MONO,
   letterSpacing: 2.5,
   textTransform: 'uppercase',
@@ -35,14 +35,14 @@ const cellLabelStyle: CSSProperties = {
 const cellValueSans: CSSProperties = {
   color: FS_INK,
   fontWeight: 700,
-  fontSize: 20,
+  fontSize: 22,
   fontFamily: FONT_SANS,
   letterSpacing: -0.2,
 };
 const cellValueMono: CSSProperties = {
   color: FS_INK,
   fontWeight: 700,
-  fontSize: 19,
+  fontSize: 21,
   fontFamily: FONT_MONO,
   letterSpacing: 0.5,
 };
@@ -223,7 +223,7 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl, fieldVisib
                   style={{
                     color: FS_INK,
                     fontWeight: 500,
-                    fontSize: 18,
+                    fontSize: 20,
                     fontFamily: FONT_KR,
                     letterSpacing: -0.1,
                     lineHeight: 1.3,
@@ -250,7 +250,7 @@ export function Mood35mm({ movieInfo: d, components, croppedImageUrl, fieldVisib
                   style={{
                     color: FS_INK,
                     fontWeight: 800,
-                    fontSize: 18,
+                    fontSize: 20,
                     fontFamily: FONT_SANS,
                     gridColumn: 'span 3',
                   }}
