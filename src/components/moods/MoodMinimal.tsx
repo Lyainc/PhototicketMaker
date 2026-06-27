@@ -22,7 +22,7 @@ import {
 // 라이브 컬러(ink)만 컴포넌트 안에서 1회 spread.
 const META_LABEL_BASE: CSSProperties = {
   fontWeight: 700,
-  fontSize: 13,
+  fontSize: 14,
   fontFamily: FONT_MONO,
   letterSpacing: 2.8,
   textTransform: 'uppercase',
@@ -32,7 +32,7 @@ const META_LABEL_BASE: CSSProperties = {
 
 const META_VALUE_BASE: CSSProperties = {
   fontWeight: 700,
-  fontSize: 25,
+  fontSize: 28,
   fontFamily: FONT_SANS,
   letterSpacing: -0.2,
   lineHeight: 1.25,

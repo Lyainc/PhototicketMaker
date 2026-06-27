@@ -128,7 +128,7 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
         )}
       </div>
 
-      {/* Top-right paired stamps */}
+      {/* Top-right paired stamps — 투명 배치(포스터 위). 가독성은 surface="dark"의 shadow로 보강(#176) */}
       <div
         style={{
           position: 'absolute',
@@ -137,15 +137,13 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
           display: 'flex',
           alignItems: 'center',
           gap: 18,
-          background: spineBg,
-          padding: '10px 16px',
         }}
       >
-        <ChainStamp chain={components.chain} label={components.chainLabel} visible={components.chainVisible} size={1.05} />
+        <ChainStamp chain={components.chain} label={components.chainLabel} visible={components.chainVisible} size={1.05} surface="dark" />
         {components.chainVisible && components.formatVisible && (
           <span style={{ width: 1, height: 26, background: ink, opacity: 0.6 }} />
         )}
-        <FormatStamp format={components.format} label={components.formatLabel} visible={components.formatVisible} size={1.0} />
+        <FormatStamp format={components.format} label={components.formatLabel} visible={components.formatVisible} size={1.0} surface="dark" />
       </div>
 
       {/* Tag top-left */}
@@ -234,7 +232,7 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
           <div
             style={{
               fontWeight: 800,
-              fontSize: 22,
+              fontSize: 24,
               fontFamily: FONT_MONO,
               letterSpacing: 2.5,
               marginBottom: 18,
@@ -246,7 +244,7 @@ export function MoodCriterion({ movieInfo: d, components, croppedImageUrl, field
         <div
           style={{
             fontWeight: 700,
-            fontSize: 18,
+            fontSize: 20,
             fontFamily: FONT_MONO,
             letterSpacing: 2.5,
             textTransform: 'uppercase',
