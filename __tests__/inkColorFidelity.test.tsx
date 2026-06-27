@@ -61,6 +61,13 @@ describe('#177 어두운 유채색 ink 반영', () => {
     expect(html).toContain('#0d0c0a');
   });
 
+  test('editorial 도 불완전 hex(#8E)를 accent로 안 쓴다', () => {
+    const html = renderToStaticMarkup(
+      <MoodEditorial movieInfo={MOVIE} components={{ ...BASE, layout: 'editorial', themeColor: '#8E' }} croppedImageUrl="blob:test" />
+    ).toLowerCase();
+    expect(html).not.toContain('color:#8e');
+  });
+
   test('어떤 무드도 유효 hex 에서 throw 하지 않는다', () => {
     for (const Mood of [MoodMinimal, Mood35mm, MoodCriterion, MoodEditorial]) {
       expect(() => markup(Mood as typeof MoodMinimal, BASE.layout)).not.toThrow();
