@@ -199,11 +199,6 @@ export function ResultPanel({
     return url;
   }, [croppedImageUrl, layout.id, layout.width, layout.height, movieInfo.title]);
 
-  // 결과 뷰 열림 = 마운트 시점에 permalink 1회 자동 발급(#179). 마운트 1회라서, 열린 채
-  // 편집해도 remount가 없어 매-편집 업로드 storm이 안 생긴다 — 내용이 바뀌면 위 reset effect가
-  // 링크를 비우고 사용자가 '링크 다시 만들기'로 재발급한다. ponytail: 닫았다 같은 내용으로
-  // 재오픈 시 재업로드(새 blob)되지만 수동 재오픈이라 storm 아님, rate limit + 7일 cleanup이
-  // 회수한다. dup 볼륨이 문제되면 permalink state를 부모로 올려 open/close 간 보존한다.
   // 공통 클립보드 복사 — 성공/거부에 따라 copyState 라벨을 갱신한다(기존 피드백 패턴 재사용).
   const copyToClipboard = useCallback(async (value: string) => {
     if (!value) return;

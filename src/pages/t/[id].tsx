@@ -59,11 +59,12 @@ export const getServerSideProps: GetServerSideProps<TicketLandingProps> = async 
 
   // 티켓은 발급 후 불변이라 SSR 결과를 엣지에 캐시한다(#194) — 같은 링크 반복 열람·크롤러
   // 언프롤이 CDN HIT로 빠져 per-view 함수 invocation과 list() advanced op를 없앤다. 성공
-  // 경로에만 건다(404·일시 조회 실패는 캐시 안 함). s-maxage(1h)는 TTL 3일보다 짧게 둬,
-  // 만료 삭제된 티켓이 캐시로 남는 창을 1h 이내로 제한한다(이후 revalidate가 404로 갱신).
+  // 경로에만 건다(404·일시 조회 실패는 캐시 안 함). s-maxage(1h) + SWR(1h)로, 만료 삭제된
+  // 티켓이 캐시로 남는 최대 창을 ~2h로 제한한다(SWR 동안 스테일 서빙 후 revalidate가 404로
+  // 갱신). SWR을 길게 두면 삭제 티켓이 그만큼 더 노출되므로 s-maxage와 같은 1h로 맞춘다.
   res.setHeader(
     'Cache-Control',
-    'public, s-maxage=3600, stale-while-revalidate=86400',
+    'public, s-maxage=3600, stale-while-revalidate=3600',
   );
 
   return { props: { imageUrl, title, pageUrl } };
